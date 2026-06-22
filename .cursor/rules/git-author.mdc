@@ -1,0 +1,11 @@
+---
+description: Git commit identity for HYRO Cloud — never use CodexHermes or Cursor co-author trailers
+alwaysApply: true
+---
+
+# Git commits
+
+- Author must be **hyro-cloud** only (`295933745+hyro-cloud@users.noreply.github.com`).
+- Never use CodexHermes, bks48fans@gmail.com, or any other author name/email.
+- Never add `Co-authored-by: Cursor`, `Made-with: Cursor`, or any Cursor attribution trailer to commits.
+- When committing, use clean messages only. If a trailer was added, strip it before push.
