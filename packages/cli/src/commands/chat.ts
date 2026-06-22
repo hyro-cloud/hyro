@@ -1,0 +1,54 @@
+import { Command } from 'commander';
+import { executeRun } from './run';
+import { handleCliError } from '../cli/handle-error';
+
+export function registerRunCommand(program: Command): void {
+  program
+    .command('run [task...]')
+    .description('Execute a one-shot autonomous task')
+    .option('--agent <slug>', 'Agent slug to run')
+    .option('--model <id>', 'Override model')
+    .option('--max-steps <n>', 'Maximum agent steps', (v) => parseInt(v, 10))
+    .option('--offline', 'Force offline local runtime')
+    .action(async (taskParts: string[], opts, cmd) => {
+      try {
+        const globalOpts = cmd.optsWithGlobals();
+        const task = taskParts.join(' ').trim();
+        await executeRun({
+          task,
+          agent: opts.agent,
+          model: opts.model,
+          maxSteps: opts.maxSteps,
+          offline: opts.offline,
+          json: globalOpts.json,
+        });
+      } catch (err) {
+        handleCliError(err);
+      }
+    });
+}
+
+export function registerChatCommand(program: Command): void {
+  program
+    .command('chat')
+    .description('Interactive chat session with the active agent (Ink UI)')
+    .option('--agent <slug>', 'Agent slug')
+    .option('--model <id>', 'Override model')
+    .option('--offline', 'Force offline local runtime')
+    .action(async (opts, cmd) => {
+      try {
+        const globalOpts = cmd.optsWithGlobals();
+        if (globalOpts.json) {
+          throw new Error('chat does not support --json. Use hyro run instead.');
+        }
+        const { launchChat } = await import('../ink-entry.js');
+        await launchChat({
+          agent: opts.agent,
+          model: opts.model,
+          offline: opts.offline,
+        });
+      } catch (err) {
+        handleCliError(err);
+      }
+    });
+}

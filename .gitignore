@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local CLI state (created in $HOME/.hyro by default)
+.hyro/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.claude/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Docker volumes
+.docker-data/
+
+# Misc
+*.pem
+*.local
+
+# Next.js / Vercel (web app)
+web/.next/
+web/out/
+web/.vercel/

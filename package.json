@@ -1,0 +1,48 @@
+{
+  "name": "hyro-cloud",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HYRO Cloud — The Operating System for Autonomous Agents. Deploy. Connect. Remember. Execute.",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/sdk",
+    "packages/api",
+    "packages/cli",
+    "web"
+  ],
+  "scripts": {
+    "build": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run build -w @hyro/api && npm run build -w hyro",
+    "clean": "npm run clean --workspaces --if-present",
+    "dev:api": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run dev -w @hyro/api",
+    "dev:cli": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run dev -w hyro",
+    "cli": "node packages/cli/bin/hyro.js",
+    "db:migrate": "npm run migrate -w @hyro/api",
+    "db:seed": "npm run seed -w @hyro/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "web": "npm run dev -w hyro-web",
+    "web:build": "npm run build -w hyro-web"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "agent-os",
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "llm",
+    "autonomous-agents",
+    "memory"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

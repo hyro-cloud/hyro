@@ -1,0 +1,40 @@
+# ============================================================================
+# HYRO Cloud — local development services
+#   docker compose up -d
+# Brings up PostgreSQL (with the pgvector extension) and Redis.
+# ============================================================================
+name: hyro-cloud
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hyro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hyro
+      POSTGRES_PASSWORD: hyro
+      POSTGRES_DB: hyro
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.docker-data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyro -d hyro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: hyro-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
