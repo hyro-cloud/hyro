@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cpu, Database, Network, Terminal } from 'lucide-react';
 import { HyroAsciiBanner } from '@/components/brand/hyro-ascii';
 import { SITE } from '@/lib/content';
+import { HYRO_AGENT_META, HYRO_AGENT_SYSTEM_PROMPT } from '@/lib/hyro-prompt';
 import { cn } from '@/lib/utils';
 
 type Tone = 'dim' | 'mute' | 'ink' | 'blue' | 'cyan' | 'green' | 'red';
@@ -34,6 +35,7 @@ const MODELS = [
 ];
 
 const AGENTS = [
+  { slug: HYRO_AGENT_META.slug, name: HYRO_AGENT_META.name, model: HYRO_AGENT_META.model },
   { slug: 'research', name: 'Research Agent', model: 'claude-sonnet-4-6' },
   { slug: 'crypto', name: 'Crypto Agent', model: 'claude-sonnet-4-6' },
   { slug: 'trading', name: 'Trading Agent', model: 'claude-opus-4-8' },
@@ -95,10 +97,11 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const QUICK = [
   'help',
+  'prompt',
   'status',
-  'run "check ETH/USDC price and pay 0.01 USDC on Base"',
-  'agents',
-  'memory list',
+  'github',
+  'run "summarize HYRO Cloud for a new user"',
+  'mcp',
 ];
 
 let LINE_ID = 0;
@@ -132,8 +135,9 @@ export function WebConsole() {
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    push('HYRO web console — local runtime (in-browser).', 'dim');
-    push('Type a command, or "help" to list everything. Try: run "<task>".', 'dim');
+    push('HYRO Agent Studio — local runtime (in-browser).', 'dim');
+    push(`Repo: ${SITE.github}`, 'dim');
+    push('Type `help`, `prompt`, or run "<task>". Install CLI: `install`', 'dim');
     push('', 'dim');
   }, [push]);
 
@@ -243,8 +247,17 @@ export function WebConsole() {
           push('  full MCP + cloud execution: npm install -g hyro', 'mute');
           break;
         case 'install':
-          push('  npm install -g hyro', 'blue');
-          push('  then run:  hyro', 'dim');
+          push('  # From GitHub (full MCP + CLI):', 'dim');
+          push('  ' + SITE.installFromGit, 'blue');
+          push('  hyro', 'dim');
+          push('  hyro run "your task" --offline', 'dim');
+          break;
+        case 'github':
+          push('  ' + SITE.github, 'blue');
+          push('  clone → npm install → npm run build → npm install -g ./packages/cli', 'dim');
+          break;
+        case 'prompt':
+          HYRO_AGENT_SYSTEM_PROMPT.split('\n').forEach((ln) => push('  ' + ln, ln.startsWith('##') ? 'blue' : 'mute'));
           break;
         case 'login':
           push('  ↗ Cloud auth happens in the CLI: `hyro login`.', 'mute');
@@ -303,9 +316,10 @@ export function WebConsole() {
           break;
         }
         case 'base':
+        case 'b20':
         case 'x402':
-          push('  HYRO × Base — agents pay over HTTP with x402 (USDC on Base).', 'ink');
-          push('  Every onchain action is tagged with a Builder Code (ERC-8021).', 'mute');
+          push('  HYRO B20 — live Base integration (x402 USDC + Builder Codes).', 'ink');
+          push('  Open /b20 on the site for the full B20 studio page.', 'mute');
           push('  Try:  run "check ETH price and pay 0.01 USDC on Base"', 'dim');
           break;
         case 'run':
@@ -378,7 +392,7 @@ export function WebConsole() {
             <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]/90" />
           </div>
           <div className="flex-1 text-center font-mono text-[10px] tracking-wide text-hyro-dim">
-            hyro@b20 — web console — {SITE.version}
+            hyro@studio — web console — {SITE.version}
           </div>
           <div className="hidden w-[52px] sm:block" />
         </div>
@@ -456,14 +470,16 @@ function StatBadge({ icon, label, value }: { icon: React.ReactNode; label: strin
 
 const HELP: [string, string][] = [
   ['help', 'list commands'],
+  ['prompt', 'show HYRO agent system prompt'],
   ['run "<task>"', 'execute an agent run (streamed)'],
   ['status', 'model · network · memory · runtime'],
+  ['github', 'repository + install steps'],
+  ['install', 'clone & install CLI from GitHub'],
   ['model [use <id>]', 'show or switch the active model'],
   ['agents', 'list available agents'],
   ['mcp [search <q>]', 'list / search MCP servers'],
   ['memory [add|search|clear]', 'local in-browser memory'],
-  ['base | x402', 'about Base + x402 payments'],
-  ['install', 'how to install the CLI'],
+  ['b20 | x402', 'about B20 + Base payments'],
   ['login', 'cloud auth (via CLI)'],
   ['clear', 'clear the screen'],
 ];
@@ -478,6 +494,7 @@ function composeAnswer(task: string, hadMemory: boolean): string[] {
     out.push('Synthesized a result from context' + (hadMemory ? ' and prior memory' : ''));
     out.push('and persisted the outcome for future recall.');
   }
-  out.push('Install the CLI (npm i -g hyro) to run this with real MCP tools + cloud.');
+  out.push('Install from GitHub for real MCP + cloud:');
+  out.push('  ' + SITE.installFromGit);
   return out;
 }

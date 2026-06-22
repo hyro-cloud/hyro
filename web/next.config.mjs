@@ -2,8 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Pin the file-tracing root to this app (multiple lockfiles exist in the monorepo).
   outputFileTracingRoot: import.meta.dirname,
+  async redirects() {
+    return [{ source: '/base', destination: '/b20', permanent: true }];
+  },
 };
 
 export default nextConfig;

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { XIcon } from '@/components/ui/x-icon';
-import { NAV_LINKS, SITE } from '@/lib/content';
+import { NAV_LINKS, SITE, type NavLink } from '@/lib/content';
 import { cn } from '@/lib/utils';
 
 export function SiteHeader() {
@@ -46,13 +46,7 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="rounded-md px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-hyro-mute transition hover:text-hyro-blue"
-            >
-              {link.label}
-            </a>
+            <NavItem key={link.href} link={link} />
           ))}
         </nav>
 
@@ -87,14 +81,7 @@ export function SiteHeader() {
         <div className="border-t border-hyro-line/70 bg-hyro-bg/95 backdrop-blur-xl md:hidden">
           <nav className="shell flex flex-col gap-0.5 px-4 py-4" aria-label="Mobile">
             {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="rounded-md px-3 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-hyro-mute hover:text-hyro-blue"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </a>
+              <NavItem key={link.href} link={link} mobile onNavigate={() => setOpen(false)} />
             ))}
             <div className="mt-3 flex flex-col gap-2 border-t border-hyro-line/70 pt-4">
               <Button variant="outline" asChild>
@@ -118,5 +105,44 @@ export function SiteHeader() {
         </div>
       )}
     </header>
+  );
+}
+
+function NavItem({
+  link,
+  mobile,
+  onNavigate,
+}: {
+  link: NavLink;
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
+  const base = mobile
+    ? 'rounded-md px-3 py-2.5 font-mono text-xs uppercase tracking-[0.12em]'
+    : 'rounded-md px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em]';
+
+  if (link.highlight) {
+    return (
+      <a
+        href={link.href}
+        onClick={onNavigate}
+        className={cn(
+          base,
+          'font-bold text-hyro-blue term-glow transition hover:text-hyro-blue-hi',
+        )}
+      >
+        {link.label}
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={link.href}
+      onClick={onNavigate}
+      className={cn(base, 'text-hyro-mute transition hover:text-hyro-blue')}
+    >
+      {link.label}
+    </a>
   );
 }

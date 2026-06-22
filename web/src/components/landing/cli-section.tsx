@@ -34,8 +34,8 @@ export function CliSection() {
 
           <div className="pt-4">
             <Button asChild>
-              <a href={SITE.github} target="_blank" rel="noopener noreferrer">
-                Read CLI docs
+              <a href={`${SITE.github}/blob/main/docs/CLI.md`} target="_blank" rel="noopener noreferrer">
+                Read CLI docs on GitHub
               </a>
             </Button>
           </div>
@@ -47,8 +47,16 @@ export function CliSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <p className="text-hyro-dim"># Quick start — works offline</p>
+          <p className="text-hyro-dim"># Install from GitHub — works offline</p>
           <p className="mt-4">
+            <span className="text-hyro-blue">$ </span>
+            <span className="text-hyro-ink break-all">git clone {SITE.githubClone}</span>
+          </p>
+          <p className="mt-2">
+            <span className="text-hyro-blue">$ </span>
+            <span className="text-hyro-ink">cd hyro && npm install && npm run build</span>
+          </p>
+          <p className="mt-2">
             <span className="text-hyro-blue">$ </span>
             <span className="text-hyro-ink">{SITE.install}</span>
           </p>

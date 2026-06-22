@@ -12,4 +12,6 @@ export * from './result';
 export * from './schemas';
 export * from './types';
 
+export * from './prompts/hyro';
+
 export const VERSION = '0.1.0';

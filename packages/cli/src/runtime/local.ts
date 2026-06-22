@@ -5,7 +5,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { newId, type RunStepType } from '@hyro/core';
+import { newId, HYRO_AGENT_SYSTEM_PROMPT, type RunStepType } from '@hyro/core';
 import { HYRO_HOME } from '../config/index';
 
 const DIM = 256;
@@ -113,6 +113,15 @@ function composeAnswer(
   lines.push(`${agentName} (local runtime) processed your task:`);
   lines.push(`  "${task.length > 200 ? `${task.slice(0, 197)}…` : task}"`);
   lines.push('');
+  lines.push('Agent directive (HYRO):');
+  lines.push(
+    HYRO_AGENT_SYSTEM_PROMPT.split('\n')
+      .filter((l) => l.startsWith('##') || l.startsWith('1.'))
+      .slice(0, 6)
+      .map((l) => `  ${l}`)
+      .join('\n'),
+  );
+  lines.push('');
   if (results.length) {
     lines.push('Drawing on relevant memory:');
     for (const r of results.slice(0, 3)) lines.push(`  • [${r.type}] ${r.content}`);
@@ -124,9 +133,8 @@ function composeAnswer(
   lines.push('  3. Execute, verify, and persist new findings to memory.');
   lines.push('');
   lines.push(
-    'This was produced by the deterministic offline runtime. Log in (`hyro login`) or set a',
+    'Offline runtime — install from https://github.com/hyro-cloud/hyro then `hyro login` for cloud + MCP.',
   );
-  lines.push('provider key to run with a full model in HYRO Cloud.');
   return lines.join('\n');
 }
 

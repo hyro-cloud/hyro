@@ -74,10 +74,18 @@ export function HeroSection() {
               </Button>
             </div>
 
-            <div className="mt-8 flex max-w-md items-center gap-2 rounded-lg border border-hyro-line/80 bg-hyro-panel/50 px-3 py-2.5 font-mono text-xs">
-              <span className="shrink-0 text-hyro-faint">$</span>
-              <code className="flex-1 truncate text-hyro-blue">{SITE.install}</code>
-              <CopyButton text={SITE.install} />
+            <div className="mt-8 space-y-2">
+              <div className="flex max-w-lg items-center gap-2 rounded-lg border border-hyro-line/80 bg-hyro-panel/50 px-3 py-2.5 font-mono text-xs">
+                <span className="shrink-0 text-hyro-faint">$</span>
+                <code className="flex-1 truncate text-hyro-blue">{SITE.installFromGit}</code>
+                <CopyButton text={SITE.installFromGit} />
+              </div>
+              <p className="font-mono text-[10px] text-hyro-dim">
+                Repo:{' '}
+                <a href={SITE.github} className="text-hyro-blue hover:underline" target="_blank" rel="noopener noreferrer">
+                  github.com/hyro-cloud/hyro
+                </a>
+              </p>
             </div>
           </motion.div>
 

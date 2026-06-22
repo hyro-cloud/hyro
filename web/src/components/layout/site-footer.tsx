@@ -53,8 +53,8 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/base" className="transition hover:text-hyro-blue">
-                  Built on Base
+                <Link href="/b20" className="font-bold text-hyro-blue transition hover:text-hyro-blue-hi">
+                  B20
                 </Link>
               </li>
               <li>

@@ -82,7 +82,7 @@ export function BaseShowcase() {
               {BASE_HERO.badge}
             </Badge>
             <h1 className="mt-5 font-mono text-4xl font-semibold tracking-tight text-hyro-ink sm:text-5xl">
-              HYRO <span className="text-hyro-blue term-glow">×</span> Base
+              HYRO <span className="font-bold text-hyro-blue term-glow">B20</span>
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-hyro-mute sm:text-lg">
               {BASE_HERO.subtitle}

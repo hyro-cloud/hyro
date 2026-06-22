@@ -21,7 +21,9 @@ all from a terminal‑first experience that runs locally and in the cloud.
 ---
 
 ```
-npm install -g hyro
+git clone https://github.com/hyro-cloud/hyro.git
+cd hyro && npm install && npm run build
+npm install -g ./packages/cli
 hyro
 ```
 

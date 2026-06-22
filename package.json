@@ -15,6 +15,14 @@
     "packages/cli",
     "web"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyro-cloud/hyro.git"
+  },
+  "homepage": "https://hyrocloud.lol",
+  "bugs": {
+    "url": "https://github.com/hyro-cloud/hyro/issues"
+  },
   "scripts": {
     "build": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run build -w @hyro/api && npm run build -w hyro",
     "clean": "npm run clean --workspaces --if-present",

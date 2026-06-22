@@ -7,9 +7,12 @@ export const SITE = {
     'A terminal-first cloud runtime to create, deploy, execute and monitor autonomous AI agents — with tools, persistent memory and native MCP connectivity.',
   url: 'https://hyrocloud.lol',
   domain: 'hyrocloud.lol',
-  github: 'https://github.com/hyro-cloud',
+  github: 'https://github.com/hyro-cloud/hyro',
+  githubClone: 'https://github.com/hyro-cloud/hyro.git',
   x: 'https://x.com/HyroCloud',
-  install: 'npm install -g hyro',
+  install: 'npm install -g ./packages/cli',
+  installFromGit:
+    'git clone https://github.com/hyro-cloud/hyro.git && cd hyro && npm install && npm run build && npm install -g ./packages/cli',
   version: '0.1.0',
   // Base / x402 references
   x402Docs: 'https://docs.cdp.coinbase.com/x402/core-concepts/builder-codes',
@@ -18,15 +21,18 @@ export const SITE = {
   baseBuilderDocs: 'https://docs.base.org/base-chain/quickstart/builder-codes',
 };
 
-export const NAV_LINKS = [
-  { href: '/#features', label: 'Features' },
+export interface NavLink {
+  href: string;
+  label: string;
+  /** B20 — highlighted as the live integration we ship */
+  highlight?: boolean;
+}
+
+export const NAV_LINKS: NavLink[] = [
   { href: '/#mcp', label: 'MCP' },
-  { href: '/#memory', label: 'Memory' },
   { href: '/#cli', label: 'CLI' },
-  { href: '/base', label: 'Base' },
-  { href: '/#architecture', label: 'Arch' },
   { href: '/#roadmap', label: 'Roadmap' },
-  { href: '/#faq', label: 'FAQ' },
+  { href: '/b20', label: 'B20', highlight: true },
 ];
 
 export const MANTRA = ['Observe', 'Decide', 'Execute', 'Remember'];
@@ -212,10 +218,10 @@ export const LIVE_SCRIPT: CliLine[] = [
    =========================================================================== */
 
 export const BASE_HERO = {
-  badge: 'Built on Base · x402 · Builder Codes',
-  title: 'HYRO × Base',
+  badge: 'B20 · Base · x402 · Builder Codes',
+  title: 'HYRO B20',
   subtitle:
-    'HYRO agents pay for tools, data and compute over HTTP with x402 — settled in USDC on Base — and every onchain action is tagged with a Builder Code so the apps and agents that drive value get verifiable credit.',
+    'B20 is our live Base integration — agents pay for tools, data and compute over HTTP with x402 (USDC on Base), with every onchain action tagged via Builder Codes (ERC-8021).',
 };
 
 export type BaseIcon =
