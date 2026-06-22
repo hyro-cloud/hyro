@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+.git
+.github
+.docker-data
+web/.next
+web/node_modules
+**/coverage
+*.log
+.env
+.env.*
+!.env.example
+README.md
+docs

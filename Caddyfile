@@ -1,0 +1,12 @@
+# HYRO Cloud — reverse proxy with automatic HTTPS (Let's Encrypt).
+# Used by docker-compose.prod.yml. Requires DNS pointing both names at the host.
+
+hyrocloud.lol, www.hyrocloud.lol {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+
+api.hyrocloud.lol {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

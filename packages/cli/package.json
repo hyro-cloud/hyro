@@ -27,6 +27,10 @@
     "directory": "packages/cli"
   },
   "homepage": "https://hyrocloud.lol",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "@hyro/core": "*",
     "@hyro/sdk": "*",

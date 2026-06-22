@@ -7,6 +7,7 @@ export const SITE = {
     'A terminal-first cloud runtime to create, deploy, execute and monitor autonomous AI agents — with tools, persistent memory and native MCP connectivity.',
   url: 'https://hyrocloud.lol',
   domain: 'hyrocloud.lol',
+  apiUrl: 'https://api.hyrocloud.lol',
   github: 'https://github.com/hyro-cloud/hyro',
   githubClone: 'https://github.com/hyro-cloud/hyro.git',
   x: 'https://x.com/HyroCloud',

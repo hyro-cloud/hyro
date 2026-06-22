@@ -1,0 +1,56 @@
+# ============================================================================
+# HYRO Cloud — Render Blueprint (API + PostgreSQL/pgvector + Redis)
+# In Render: New → Blueprint → connect this repo. Render reads this file.
+# The web (Next.js) is hosted separately on Vercel — see DEPLOY.md.
+# ============================================================================
+services:
+  - type: web
+    name: hyro-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeploy: true
+    # Apply DB migrations before each deploy goes live.
+    preDeployCommand: node packages/api/dist/db/migrate.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hyro-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: hyro-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_KEY_PEPPER
+        generateValue: true
+      - key: PUBLIC_API_URL
+        value: https://api.hyrocloud.lol
+      - key: CORS_ORIGINS
+        value: https://hyrocloud.lol,https://www.hyrocloud.lol
+      - key: DEFAULT_MODEL
+        value: claude-sonnet-4-6
+      - key: EMBEDDING_MODEL
+        value: local-minilm
+      - key: EMBEDDING_DIM
+        value: "1536"
+      # Add your model keys in the Render dashboard (kept out of source):
+      # ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY / OPENROUTER_API_KEY
+
+  - type: redis
+    name: hyro-redis
+    plan: starter
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # internal access only
+
+databases:
+  - name: hyro-db
+    plan: basic-256mb
+    postgresMajorVersion: "16" # pgvector + citext available; migrations enable them

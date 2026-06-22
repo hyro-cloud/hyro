@@ -1,0 +1,89 @@
+# ============================================================================
+# HYRO Cloud — full production stack on a single VPS.
+#   1) Point DNS A records: hyrocloud.lol + api.hyrocloud.lol → your server IP
+#   2) cp deploy/.env.prod.example .env.prod   (fill JWT_SECRET, keys, etc.)
+#   3) docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+# Caddy obtains TLS certs automatically. Web → :443, API → api.hyrocloud.lol.
+# ============================================================================
+name: hyro-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hyro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hyro}
+      POSTGRES_DB: hyro
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyro -d hyro"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: "8080"
+      DATABASE_URL: postgres://hyro:${POSTGRES_PASSWORD:-hyro}@postgres:5432/hyro
+      REDIS_URL: redis://redis:6379
+      PUBLIC_API_URL: https://api.hyrocloud.lol
+      CORS_ORIGINS: https://hyrocloud.lol,https://www.hyrocloud.lol
+      JWT_SECRET: ${JWT_SECRET}
+      API_KEY_PEPPER: ${API_KEY_PEPPER}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-claude-sonnet-4-6}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    # Apply migrations, then start the server.
+    command: ["sh", "-c", "node packages/api/dist/db/migrate.js && node packages/api/dist/server.js"]
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [web, api]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:

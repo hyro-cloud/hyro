@@ -109,7 +109,8 @@ export function loadConfig(): Config {
     isProd: e.NODE_ENV === 'production',
     logLevel: e.LOG_LEVEL,
     host: e.API_HOST,
-    port: e.API_PORT,
+    // Honor the platform-injected PORT (Render/Railway/Fly/Heroku) before API_PORT.
+    port: process.env.PORT ? Number(process.env.PORT) : e.API_PORT,
     publicApiUrl: e.PUBLIC_API_URL,
     jwtSecret: e.JWT_SECRET,
     apiKeyPepper: e.API_KEY_PEPPER,
