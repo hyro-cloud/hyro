@@ -1,5 +1,6 @@
 import { HyroClient } from '@hyro/sdk';
 import { activeApiUrl, clearCreds, loadCreds, saveConfig, saveCreds } from '../config';
+import { getClient } from './client';
 import { HYRO_AGENT_META } from '@hyro/core';
 import { CliError, EXIT } from '../lib/errors';
 import { ask, askSecret } from '../lib/prompt';
@@ -33,7 +34,7 @@ export async function login(opts: LoginOptions = {}): Promise<void> {
       console.log(JSON.stringify({ user, loggedIn: true }));
       return;
     }
-    success(`Authenticated with API key as ${theme.bold(user.email)}.`);
+    success(`Authenticated with API key as ${theme.bold(user.email)}. ${theme.dim('Saved locally.')}`);
     return;
   }
 
@@ -64,7 +65,7 @@ export async function login(opts: LoginOptions = {}): Promise<void> {
   }
 
   success(
-    `${opts.register ? 'Account created' : 'Logged in'} as ${theme.bold(result.user.email)}.`,
+    `${opts.register ? 'Account created' : 'Logged in'} as ${theme.bold(result.user.email)}. ${theme.dim('Session saved — no need to login again.')}`,
   );
 }
 
@@ -81,7 +82,7 @@ export async function whoami(json = false): Promise<void> {
     else throw new CliError('Not logged in.', EXIT.auth, "Run 'hyro login'.");
     return;
   }
-  const client = new HyroClient({ baseUrl: activeApiUrl(), token: creds.token });
+  const client = getClient();
   const { user } = await client.auth.me();
   if (json) console.log(JSON.stringify({ user, loggedIn: true }));
   else {

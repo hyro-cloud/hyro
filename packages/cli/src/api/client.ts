@@ -1,12 +1,17 @@
 import { HyroClient } from '@hyro/sdk';
 import { activeApiUrl, activeToken } from '../config';
 import { CliError, EXIT } from '../lib/errors';
+import { refreshAccessToken } from './tokenRefresh';
 
-/** Build a client using stored config + credentials. */
+/** Build a client using stored config + credentials (auto-refreshes expired sessions). */
 export function getClient(): HyroClient {
-  return new HyroClient({ baseUrl: activeApiUrl(), token: activeToken(), timeoutMs: 180_000 });
+  return new HyroClient({
+    baseUrl: activeApiUrl(),
+    token: activeToken(),
+    timeoutMs: 180_000,
+    onAuthError: refreshAccessToken,
+  });
 }
-
 /** Build a client and assert the user is authenticated. */
 export function requireAuth(): HyroClient {
   if (!activeToken()) {

@@ -12,6 +12,8 @@ export interface HttpOptions {
   headers?: Record<string, string>;
   /** Hook invoked with the request id of every response. */
   onRequestId?: (requestId: string | null) => void;
+  /** On 401 unauthorized, return a new bearer token to retry once (CLI session refresh). */
+  onAuthError?: () => Promise<string | null>;
 }
 
 export interface RequestOptions {
@@ -24,6 +26,8 @@ export interface RequestOptions {
   /** Expect no JSON body (204). */
   expectEmpty?: boolean;
 }
+
+type InternalRequestOptions = RequestOptions & { _authRetry?: boolean };
 
 /** Error thrown when the API returns a non‑2xx response. */
 export class ApiError extends HyroError {
@@ -47,6 +51,7 @@ export class Http {
   private readonly timeoutMs: number;
   private readonly headers: Record<string, string>;
   private readonly onRequestId?: (requestId: string | null) => void;
+  private readonly onAuthError?: () => Promise<string | null>;
 
   constructor(options: HttpOptions) {
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
@@ -55,6 +60,7 @@ export class Http {
     this.timeoutMs = options.timeoutMs ?? 60_000;
     this.headers = options.headers ?? {};
     this.onRequestId = options.onRequestId;
+    this.onAuthError = options.onAuthError;
     if (!this.fetchImpl) {
       throw new Error('No fetch implementation available (Node >= 18 required).');
     }
@@ -83,7 +89,24 @@ export class Http {
     return headers;
   }
 
-  async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  async request<T>(path: string, options: InternalRequestOptions = {}): Promise<T> {
+    try {
+      return await this.executeRequest<T>(path, options);
+    } catch (err) {
+      const retryable =
+        !options._authRetry &&
+        err instanceof ApiError &&
+        err.statusCode === 401 &&
+        this.onAuthError;
+      if (!retryable) throw err;
+      const newToken = await this.onAuthError!();
+      if (!newToken) throw err;
+      this.setToken(newToken);
+      return this.executeRequest<T>(path, { ...options, _authRetry: true });
+    }
+  }
+
+  private async executeRequest<T>(path: string, options: InternalRequestOptions = {}): Promise<T> {
     const method = options.method ?? 'GET';
     const hasBody = options.body !== undefined && method !== 'GET';
     const url = this.buildUrl(path, options.query);
