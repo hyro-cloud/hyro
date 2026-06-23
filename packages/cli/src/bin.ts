@@ -10,22 +10,18 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
       return;
     }
 
-    const { launchChat } = await import('./ink-entry.js');
-    const { activeToken, loadConfig } = await import('./config');
+    const { activeToken } = await import('./config');
     const { getClient } = await import('./api/client.js');
     const { ensureHyroAgent } = await import('./lib/ensureAgent.js');
-    const cfg = loadConfig();
+    const { runDashboard } = await import('./ui/dashboard.js');
     if (activeToken()) {
       try {
         await ensureHyroAgent(getClient());
       } catch {
-        /* offline fallback below if cloud unreachable */
+        /* offline — the dashboard still works locally */
       }
     }
-    await launchChat({
-      agent: cfg.activeAgent ?? 'hyro',
-      offline: !activeToken(),
-    });
+    await runDashboard();
     return;
   }
 

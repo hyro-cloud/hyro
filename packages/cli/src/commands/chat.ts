@@ -33,7 +33,7 @@ export function registerRunCommand(program: Command): void {
 export function registerChatCommand(program: Command): void {
   program
     .command('chat')
-    .description('Interactive chat session with the active agent (Ink UI)')
+    .description('Interactive chat with the active agent (same UI as dashboard chat)')
     .option('--agent <slug>', 'Agent slug')
     .option('--model <id>', 'Override model')
     .option('--offline', 'Force offline local runtime')
@@ -47,12 +47,8 @@ export function registerChatCommand(program: Command): void {
           await launchHermesInteractive();
           return;
         }
-        const { launchChat } = await import('../ink-entry.js');
-        await launchChat({
-          agent: opts.agent,
-          model: opts.model,
-          offline: opts.offline,
-        });
+        const { runChatSession } = await import('../ui/chat-session.js');
+        await runChatSession({ banner: true });
       } catch (err) {
         handleCliError(err);
       }

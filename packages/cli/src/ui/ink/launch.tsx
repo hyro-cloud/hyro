@@ -1,24 +1,24 @@
 import React from 'react';
 import { render } from 'ink';
 import { HomeApp } from './app';
-import { ChatApp, type ChatAppProps } from './chat';
+import type { ChatAppProps } from './chat';
 import { login as doLogin } from '../../api/auth';
 import { runMemoryCommand } from '../../commands/memory';
 import { runDeploy } from '../../commands/deploy';
 import { runMcpCommand } from '../../commands/mcp';
 import { executeRun } from '../../commands/run';
 import { createProgram } from '../../cli/program';
-import { supportsInteractiveInk } from '../../lib/terminal';
-import { launchReadlineChat } from '../readline-chat';
 
 async function dispatchHomeCommand(cmd: string, args: string[]): Promise<void> {
   switch (cmd) {
     case 'login':
       await doLogin({});
       break;
-    case 'chat':
-      await launchChat({});
+    case 'chat': {
+      const { runChatSession } = await import('../chat-session.js');
+      await runChatSession({ banner: true });
       break;
+    }
     case 'run':
       if (!args.length) throw new Error('Provide a task: run "your task here"');
       await executeRun({ task: args.join(' '), json: false });
@@ -47,11 +47,7 @@ export async function launchHome(): Promise<void> {
   await waitUntilExit();
 }
 
-export async function launchChat(props: ChatAppProps = {}): Promise<void> {
-  if (!supportsInteractiveInk()) {
-    await launchReadlineChat(props);
-    return;
-  }
-  const { waitUntilExit } = render(<ChatApp {...props} />);
-  await waitUntilExit();
+export async function launchChat(_props: ChatAppProps = {}): Promise<void> {
+  const { runChatSession } = await import('../chat-session.js');
+  await runChatSession({ banner: true });
 }

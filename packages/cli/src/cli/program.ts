@@ -9,7 +9,7 @@ import { print } from '../lib/output';
 import { CLI_VERSION } from '../version';
 import { setColorEnabled } from '../theme';
 
-const KNOWN_COMMANDS = new Set(['login', 'chat', 'run', 'memory', 'deploy', 'mcp']);
+const KNOWN_COMMANDS = new Set(['login', 'chat', 'run', 'memory', 'deploy', 'mcp', 'dashboard', 'home', 'ui']);
 
 export function createProgram(): Command {
   const program = new Command('hyro')
@@ -29,18 +29,29 @@ export function createProgram(): Command {
   registerDeployCommand(program);
   registerMcpCommand(program);
 
+  program
+    .command('dashboard')
+    .aliases(['home', 'ui'])
+    .description('Open the HYRO dashboard (TUI home)')
+    .action(async () => {
+      const { runDashboard } = await import('../ui/dashboard.js');
+      await runDashboard();
+    });
+
   program.addHelpText('after', () => {
     return (
       '\n' +
       renderBanner(CLI_VERSION) +
       '\nCommands:\n' +
-      '  login    Authenticate with HYRO Cloud\n' +
-      '  chat     Interactive Ink chat session\n' +
-      '  run      One-shot autonomous task\n' +
-      '  memory   Agent memory (search, export, import)\n' +
-      '  deploy   Deploy agent to cloud\n' +
-      '  mcp      MCP registry & grants\n' +
-      '\nRun `hyro` to chat with your HYRO agent on the cloud (brain runs on the server).\n'
+      '  login      Authenticate with HYRO Cloud\n' +
+      '  chat       Interactive agent chat (readline TUI)\n' +
+      '  run        One-shot autonomous task\n' +
+      '  memory     Agent memory (search, export, import)\n' +
+      '  deploy     Deploy agent to cloud\n' +
+      '  mcp        MCP registry & grants\n' +
+      '  dashboard  Open the HYRO dashboard (TUI home)\n' +
+      '\nRun `hyro` with no arguments to open the dashboard. Type `chat` inside to talk to your agent.\n' +
+      'Goals and facts added in the dashboard sync to VPS memory when logged in.\n'
     );
   });
 
@@ -59,6 +70,7 @@ export function shouldParseArgv(argv: string[]): boolean {
 export function printQuickHelp(): void {
   print(renderBanner(CLI_VERSION));
   print('  Usage: hyro <command> [args]');
-  print('  Run with no command to open the Ink terminal.');
+  print('  Run with no command to open the HYRO dashboard.');
+  print('  Type `chat` inside the dashboard, or run `hyro chat` directly.');
   print('');
 }
