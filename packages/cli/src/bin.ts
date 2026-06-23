@@ -1,8 +1,15 @@
 import { createProgram, shouldParseArgv } from './cli/program';
 import { handleCliError } from './cli/handle-error';
+import { resolveRuntime } from './runtime/resolveRuntime';
+import { launchHermesInteractive } from './runtime/hermesBridge';
 
 async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
   if (!shouldParseArgv(argv) && process.stdin.isTTY && process.stdout.isTTY) {
+    if (resolveRuntime() === 'hermes') {
+      await launchHermesInteractive();
+      return;
+    }
+
     const { launchChat } = await import('./ink-entry.js');
     const { activeToken, loadConfig } = await import('./config');
     const { getClient } = await import('./api/client.js');

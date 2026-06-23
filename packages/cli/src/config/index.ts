@@ -8,6 +8,8 @@ export interface CliConfig {
   apiUrl: string;
   model: string;
   activeAgent: string | null;
+  /** cloud = HYRO API · hermes = Hermes Agent subprocess · auto = hermes if installed else cloud */
+  runtime?: 'cloud' | 'hermes' | 'auto';
 }
 
 export interface Credentials {
@@ -24,6 +26,7 @@ const DEFAULT_CONFIG: CliConfig = {
   apiUrl: process.env.HYRO_API_URL || 'http://localhost:8080',
   model: DEFAULTS.model,
   activeAgent: 'hyro',
+  runtime: 'auto',
 };
 
 const DEFAULT_CREDS: Credentials = { token: null, refreshToken: null, email: null };

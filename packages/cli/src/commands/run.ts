@@ -2,6 +2,8 @@ import type { HyroClient } from '@hyro/sdk';
 import { activeToken, loadConfig } from '../config';
 import { getClient, isApiReachable, requireAuth } from '../api/client';
 import { ensureHyroAgent } from '../lib/ensureAgent';
+import { resolveRuntime } from '../runtime/resolveRuntime';
+import { runHermesTask } from '../runtime/hermesBridge';
 import { CliError, EXIT } from '../lib/errors';
 import { renderStep } from '../lib/render';
 import { LocalMemory, runLocalTask } from '../runtime/local';
@@ -145,6 +147,11 @@ async function executeOnline(client: HyroClient, task: string, opts: RunOptions)
 export async function executeRun(opts: RunOptions): Promise<{ finalText: string; steps: number }> {
   if (!opts.task.trim()) {
     throw new CliError('Provide a task.', EXIT.usage, 'Example: hyro run "summarize the README"');
+  }
+
+  if (!opts.offline && resolveRuntime() === 'hermes') {
+    await runHermesTask(opts.task, opts.model);
+    return { finalText: '', steps: 0 };
   }
 
   if (await shouldRunOffline(opts)) {

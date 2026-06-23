@@ -1,6 +1,8 @@
 import { Command } from 'commander';
 import { executeRun } from './run';
 import { handleCliError } from '../cli/handle-error';
+import { resolveRuntime } from '../runtime/resolveRuntime';
+import { launchHermesInteractive } from '../runtime/hermesBridge';
 
 export function registerRunCommand(program: Command): void {
   program
@@ -40,6 +42,10 @@ export function registerChatCommand(program: Command): void {
         const globalOpts = cmd.optsWithGlobals();
         if (globalOpts.json) {
           throw new Error('chat does not support --json. Use hyro run instead.');
+        }
+        if (!opts.offline && resolveRuntime() === 'hermes') {
+          await launchHermesInteractive();
+          return;
         }
         const { launchChat } = await import('../ink-entry.js');
         await launchChat({

@@ -35,14 +35,45 @@ cd hermes-agent
 
 ## Brand Hermes as HYRO (Hermes runtime, HYRO identity)
 
-Copy the template SOUL file:
+When users type **`hyro`**, the CLI can launch **Hermes Agent** in the background (same brain as [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)) with a HYRO `SOUL.md` — users never need to type `hermes`.
+
+### On the user's PC (recommended for full Hermes intelligence)
+
+**PowerShell (Windows):**
+
+```powershell
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+hermes setup
+```
+
+**`~/.hyro/config.json`:**
+
+```json
+{
+  "apiUrl": "https://api.hyrocloud.lol",
+  "model": "mimo-chat",
+  "activeAgent": "hyro",
+  "runtime": "hermes"
+}
+```
+
+Or `"runtime": "auto"` (default) — uses Hermes when installed, otherwise HYRO Cloud API.
+
+Configure MiMo in Hermes (`hermes model` / `--provider xiaomi`) with the same key as HYRO `.env.prod`.
+
+Then:
+
+```bash
+hyro
+hyro run "your task"
+```
+
+### Manual SOUL on VPS (optional)
 
 ```bash
 mkdir -p ~/.hermes
 cp deploy/hermes-SOUL-HYRO.md ~/.hermes/SOUL.md
 ```
-
-Hermes loads `SOUL.md` instead of the default Hermes identity ([docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/context-files)).
 
 ---
 

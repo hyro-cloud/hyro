@@ -40,7 +40,8 @@ export function createProgram(): Command {
       '  memory   Agent memory (search, export, import)\n' +
       '  deploy   Deploy agent to cloud\n' +
       '  mcp      MCP registry & grants\n' +
-      '\nRun `hyro` with no arguments to open the HYRO agent chat (like `hermes` → Hermes terminal).\n'
+      '\nRun `hyro` with no arguments — opens HYRO chat (Hermes Agent brain when installed, else HYRO Cloud).\n' +
+      'Set `"runtime": "hermes"` in ~/.hyro/config.json to always use Hermes intelligence under the `hyro` command.\n'
     );
   });
 
