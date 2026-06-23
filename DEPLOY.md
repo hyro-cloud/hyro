@@ -83,6 +83,8 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
 Caddy issues HTTPS automatically once DNS propagates.
 
+**Optional — full [Hermes Agent](https://github.com/NousResearch/hermes-agent) runtime on the same VPS (MiMo + SOUL.md branded as HYRO):** see [`deploy/HERMES-VPS.md`](deploy/HERMES-VPS.md).
+
 **Niagahoster + split Vercel web / VPS API:** see [`deploy/DNS-NIAGAHOSTER.md`](deploy/DNS-NIAGAHOSTER.md) and use `docker-compose.api.yml` (API-only, no web container).
 
 ---
