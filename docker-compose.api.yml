@@ -44,6 +44,10 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    # Ubuntu systemd-resolved (127.0.0.53) is unreachable from containers — use public DNS.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -71,6 +75,9 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     depends_on: [api]
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     ports:
       - "80:80"
       - "443:443"

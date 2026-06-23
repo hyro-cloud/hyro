@@ -36,6 +36,21 @@ docker compose --env-file .env.prod -f docker-compose.api.yml up -d --build
 
 Open firewall ports **80** and **443** on the VPS.
 
+### Caddy / Let's Encrypt DNS errors inside Docker
+
+If Caddy logs show `lookup ... on 127.0.0.53:53: connection refused`, containers cannot reach the host resolver. `docker-compose.api.yml` sets public DNS (`8.8.8.8`, `1.1.1.1`) for `api` and `caddy`. After `git pull`, recreate Caddy:
+
+```bash
+docker compose -f docker-compose.api.yml up -d --force-recreate caddy
+```
+
+Verify:
+
+```bash
+docker compose -f docker-compose.api.yml exec caddy wget -qO- http://127.0.0.1/readyz
+curl https://api.hyrocloud.lol/readyz
+```
+
 Verify:
 
 ```bash
