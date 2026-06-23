@@ -116,7 +116,7 @@ export class AgentService {
 
   /** Resolve an agent the caller is allowed to read (owned, or public). */
   async get(userId: string, ref: string): Promise<Agent> {
-    const row = await this.findByRef(ref);
+    const row = await this.findByRefForUser(ref, userId);
     if (!row) throw new NotFoundError('Agent');
     if (row.user_id !== userId && row.visibility === 'private') throw new NotFoundError('Agent');
     return mapAgent(row);
@@ -124,9 +124,31 @@ export class AgentService {
 
   /** Resolve an agent owned by the caller (mutations). */
   async getOwned(userId: string, ref: string): Promise<Agent> {
-    const row = await this.findByRef(ref);
-    if (!row || row.user_id !== userId) throw new NotFoundError('Agent');
+    const row = await this.findByRefForUser(ref, userId, { ownedOnly: true });
+    if (!row) throw new NotFoundError('Agent');
     return mapAgent(row);
+  }
+
+  private async findByRefForUser(
+    ref: string,
+    userId: string,
+    opts: { ownedOnly?: boolean } = {},
+  ): Promise<AgentRow | null> {
+    if (ref.startsWith('agt_')) {
+      const row = await this.db.queryOne<AgentRow>('SELECT * FROM agents WHERE id = $1', [ref]);
+      if (!row) return null;
+      if (opts.ownedOnly && row.user_id !== userId) return null;
+      return row;
+    }
+    const owned = await this.db.queryOne<AgentRow>(
+      'SELECT * FROM agents WHERE user_id = $1 AND slug = $2',
+      [userId, ref],
+    );
+    if (owned || opts.ownedOnly) return owned;
+    return this.db.queryOne<AgentRow>(
+      "SELECT * FROM agents WHERE slug = $1 AND visibility = 'public' ORDER BY id LIMIT 1",
+      [ref],
+    );
   }
 
   private async findByRef(ref: string): Promise<AgentRow | null> {

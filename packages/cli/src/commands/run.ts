@@ -1,6 +1,7 @@
 import type { HyroClient } from '@hyro/sdk';
 import { activeToken, loadConfig } from '../config';
 import { getClient, isApiReachable, requireAuth } from '../api/client';
+import { ensureHyroAgent } from '../lib/ensureAgent';
 import { CliError, EXIT } from '../lib/errors';
 import { renderStep } from '../lib/render';
 import { LocalMemory, runLocalTask } from '../runtime/local';
@@ -79,6 +80,7 @@ async function executeOnline(client: HyroClient, task: string, opts: RunOptions)
       'Pass --agent <slug> or set activeAgent in config.',
     );
   }
+  await ensureHyroAgent(client);
   const { agent } = await client.agents.get(ref);
 
   if (opts.json) {

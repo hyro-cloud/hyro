@@ -118,6 +118,9 @@ export class AuthService {
     const userRow = await this.db.queryOne<UserRow>('SELECT * FROM users WHERE id = $1', [session.user_id]);
     if (!userRow) throw new UnauthorizedError('Account no longer exists');
 
+    const user = mapUser(userRow);
+    await this.ctx.services.agents.ensureDefaultHyroAgent(user.id, user.defaultModel);
+
     // Rotate: revoke the used token, issue a fresh pair.
     await this.db.query('UPDATE sessions SET revoked_at = now() WHERE id = $1', [session.id]);
     const tokens = await this.issueTokens(mapUser(userRow));
@@ -132,7 +135,9 @@ export class AuthService {
   async me(userId: string): Promise<User> {
     const row = await this.db.queryOne<UserRow>('SELECT * FROM users WHERE id = $1', [userId]);
     if (!row) throw new NotFoundError('User');
-    return mapUser(row);
+    const user = mapUser(row);
+    await this.ctx.services.agents.ensureDefaultHyroAgent(userId, user.defaultModel);
+    return user;
   }
 
   async setDefaultModel(userId: string, model: string): Promise<User> {

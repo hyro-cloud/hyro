@@ -1,6 +1,7 @@
 import { HyroClient } from '@hyro/sdk';
 import { activeApiUrl, clearCreds, loadCreds, saveConfig, saveCreds } from '../config';
 import { getClient } from './client';
+import { ensureHyroAgent } from '../lib/ensureAgent';
 import { HYRO_AGENT_META } from '@hyro/core';
 import { CliError, EXIT } from '../lib/errors';
 import { ask, askSecret } from '../lib/prompt';
@@ -58,6 +59,12 @@ export async function login(opts: LoginOptions = {}): Promise<void> {
     activeAgent: HYRO_AGENT_META.slug,
     model: result.user.defaultModel,
   });
+
+  try {
+    await ensureHyroAgent(getClient());
+  } catch {
+    /* login succeeded; agent will be provisioned on first hyro chat */
+  }
 
   if (opts.json) {
     console.log(JSON.stringify({ user: result.user, loggedIn: true }));
