@@ -5,7 +5,9 @@ import type { HyroClient } from '@hyro/sdk';
 import { activeToken } from '../config';
 import { getClient, requireAuth } from '../api/client';
 import { resolveAgent } from './agent';
+import { print } from './output';
 import { DATA_SOURCES, type DataSource, loadWorkspace, toggleSource } from './workspace';
+import { printVpsSetup, VPS_MCP_SETUP } from './mcpSetup';
 
 /** MCP registry slug for each dashboard source key (undefined = not shipped yet). */
 export const SOURCE_MCP_SLUG: Record<string, string | undefined> = {
@@ -87,6 +89,7 @@ export async function connectMcpSource(key: string): Promise<void> {
   if (!slug) throw new Error(`${source.label} is not available yet.`);
 
   const client = requireAuth();
+  if (key in VPS_MCP_SETUP) print(printVpsSetup(key));
   await ensureInstalled(client, slug);
   await ensureGranted(client, slug);
   toggleSource(key, true);

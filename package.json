@@ -13,6 +13,7 @@
     "packages/sdk",
     "packages/api",
     "packages/cli",
+    "packages/mcp-base",
     "web"
   ],
   "repository": {
@@ -24,7 +25,7 @@
     "url": "https://github.com/hyro-cloud/hyro/issues"
   },
   "scripts": {
-    "build": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run build -w @hyro/api && npm run build -w hyro",
+    "build": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run build -w @hyro/mcp-base && npm run build -w @hyro/api && npm run build -w hyro",
     "clean": "npm run clean --workspaces --if-present",
     "dev:api": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run dev -w @hyro/api",
     "dev:cli": "npm run build -w @hyro/core && npm run build -w @hyro/sdk && npm run dev -w hyro",

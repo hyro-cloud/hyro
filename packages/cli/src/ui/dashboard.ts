@@ -19,6 +19,7 @@ import {
   resolveConnectedSources,
   autoConnectFreeSources,
 } from '../lib/sourceConnect';
+import { printVpsSetup, VPS_MCP_SETUP } from '../lib/mcpSetup';
 import {
   addFact,
   addGoal,
@@ -204,8 +205,8 @@ function renderHelp(): void {
     ['progress <n> <n%>', 'set goal #n progress'],
     ['governance [supervised|autonomous|readonly]', 'view / set governance (local)'],
     ['sources', 'list data sources'],
-    ['connect <key> / disconnect <key>', 'toggle a data source'],
-    ['setup [model <id> | api <url>]', 'configure runtime'],
+    ['connect <key> / disconnect <key>', 'toggle a data source (installs MCP on VPS)'],
+    ['setup github | setup base', 'VPS env instructions for GitHub / Base B20'],
     ['model <id>', 'switch the active model'],
     ['status / clear', 're-render the dashboard'],
     ['help / exit', 'this help / quit'],
@@ -311,6 +312,10 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
     return void (await rerender());
   if (lower === 'chat') return 'chat';
   if (lower === 'memory' || lower === 'mem') return void (await renderMemory());
+  if (head === 'setup' && parts[1] && parts[1] in VPS_MCP_SETUP) {
+    print(printVpsSetup(parts[1]!));
+    return;
+  }
   if (lower === 'setup') return void (await renderSetup());
   if (lower === 'sources') return void (await renderSetup());
 

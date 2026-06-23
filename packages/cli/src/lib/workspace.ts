@@ -56,7 +56,7 @@ export interface DataSource {
 export const DATA_SOURCES: DataSource[] = [
   { key: 'memory', label: 'Memory', local: true },
   { key: 'mcp', label: 'MCP Hub', local: true },
-  { key: 'base', label: 'Base / x402', setupHint: 'needs BASE_RPC_URL on VPS' },
+  { key: 'base', label: 'Base / B20 / x402', setupHint: 'BASE_RPC_URL in .env.prod' },
   { key: 'coingecko', label: 'CoinGecko', comingSoon: true },
   { key: 'dexscreener', label: 'DexScreener' },
   { key: 'github', label: 'GitHub', setupHint: 'needs GITHUB_TOKEN on VPS' },

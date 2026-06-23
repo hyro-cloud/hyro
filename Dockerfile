@@ -16,6 +16,7 @@ COPY packages/core/package.json packages/core/
 COPY packages/sdk/package.json packages/sdk/
 COPY packages/api/package.json packages/api/
 COPY packages/cli/package.json packages/cli/
+COPY packages/mcp-base/package.json packages/mcp-base/
 COPY web/package.json web/
 RUN npm ci
 
@@ -23,8 +24,10 @@ RUN npm ci
 COPY packages/core packages/core
 COPY packages/sdk packages/sdk
 COPY packages/api packages/api
+COPY packages/mcp-base packages/mcp-base
 RUN npm run build -w @hyro/core \
  && npm run build -w @hyro/sdk \
+ && npm run build -w @hyro/mcp-base \
  && npm run build -w @hyro/api \
  && npm prune --omit=dev
 
@@ -43,6 +46,8 @@ COPY --from=build /app/packages/sdk/dist ./packages/sdk/dist
 COPY --from=build /app/packages/api/package.json ./packages/api/package.json
 COPY --from=build /app/packages/api/dist ./packages/api/dist
 COPY --from=build /app/packages/api/migrations ./packages/api/migrations
+COPY --from=build /app/packages/mcp-base/package.json ./packages/mcp-base/package.json
+COPY --from=build /app/packages/mcp-base/dist ./packages/mcp-base/dist
 
 # Run as the non-root node user.
 USER node

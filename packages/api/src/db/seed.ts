@@ -50,22 +50,42 @@ const MCP_SERVERS: McpSeed[] = [
   },
   {
     slug: 'base',
-    name: 'Base',
-    description: 'Read Base / EVM chain state and submit transactions.',
+    name: 'Base / B20',
+    description:
+      'Base chain reads, B20 token balances (ERC-20), and B20 launch guide. x402-ready RPC.',
     transport: 'stdio',
-    install: { command: 'npx', args: ['-y', '@hyro/mcp-base'] },
+    install: { command: 'node', args: ['packages/mcp-base/dist/index.js'] },
     env: ['BASE_RPC_URL', 'WALLET_PRIVATE_KEY'],
     permissions: { network: true },
     verified: true,
     tools: [
       {
+        name: 'get_chain_info',
+        description: 'Base chain id, RPC URL, wallet configured.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
         name: 'get_balance',
-        description: 'Get the native balance of an address.',
+        description: 'Native ETH balance on Base.',
         inputSchema: { type: 'object', properties: { address: { type: 'string' } }, required: ['address'] },
       },
       {
+        name: 'get_token_balance',
+        description: 'ERC-20 / B20 token balance (tokens at 0xB200…).',
+        inputSchema: {
+          type: 'object',
+          properties: { token: { type: 'string' }, address: { type: 'string' } },
+          required: ['token', 'address'],
+        },
+      },
+      {
+        name: 'b20_launch_guide',
+        description: 'Guide to launch a B20 token via Base B20 Factory precompile.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
         name: 'send_transaction',
-        description: 'Send a transaction.',
+        description: 'Send native ETH (needs WALLET_PRIVATE_KEY).',
         inputSchema: {
           type: 'object',
           properties: { to: { type: 'string' }, value: { type: 'string' } },
@@ -229,7 +249,16 @@ async function seedMcpServers(db: Database): Promise<number> {
     const res = await db.queryOne<{ id: string }>(
       `INSERT INTO mcp_servers (id, slug, name, description, transport, install, env, tools, permissions, publisher, verified)
        VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::text[],$8::jsonb,$9::jsonb,'hyro',$10)
-       ON CONFLICT (slug) DO NOTHING RETURNING id`,
+       ON CONFLICT (slug) DO UPDATE SET
+         name = EXCLUDED.name,
+         description = EXCLUDED.description,
+         transport = EXCLUDED.transport,
+         install = EXCLUDED.install,
+         env = EXCLUDED.env,
+         tools = EXCLUDED.tools,
+         permissions = EXCLUDED.permissions,
+         verified = EXCLUDED.verified
+       RETURNING id`,
       [
         newId('mcpServer'),
         s.slug,
