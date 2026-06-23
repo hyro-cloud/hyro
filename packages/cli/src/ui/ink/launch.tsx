@@ -8,6 +8,8 @@ import { runDeploy } from '../../commands/deploy';
 import { runMcpCommand } from '../../commands/mcp';
 import { executeRun } from '../../commands/run';
 import { createProgram } from '../../cli/program';
+import { supportsInteractiveInk } from '../../lib/terminal';
+import { launchReadlineChat } from '../readline-chat';
 
 async function dispatchHomeCommand(cmd: string, args: string[]): Promise<void> {
   switch (cmd) {
@@ -46,6 +48,10 @@ export async function launchHome(): Promise<void> {
 }
 
 export async function launchChat(props: ChatAppProps = {}): Promise<void> {
+  if (!supportsInteractiveInk()) {
+    await launchReadlineChat(props);
+    return;
+  }
   const { waitUntilExit } = render(<ChatApp {...props} />);
   await waitUntilExit();
 }
