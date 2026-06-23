@@ -90,6 +90,7 @@ export class AuthService {
       [id, input.email, passwordHash, input.displayName ?? null, this.config.defaultModel],
     );
     const user = mapUser(row!);
+    await this.ctx.services.agents.ensureDefaultHyroAgent(user.id, user.defaultModel);
     const tokens = await this.issueTokens(user);
     return { user, tokens };
   }
@@ -100,6 +101,7 @@ export class AuthService {
       throw new UnauthorizedError('Invalid email or password');
     }
     const user = mapUser(row);
+    await this.ctx.services.agents.ensureDefaultHyroAgent(user.id, user.defaultModel);
     const tokens = await this.issueTokens(user);
     return { user, tokens };
   }

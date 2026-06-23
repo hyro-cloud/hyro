@@ -63,6 +63,12 @@ Expected: `{"status":"ok","db":true,"redis":true}`
 
 ```bash
 HYRO_API_URL=https://api.hyrocloud.lol hyro login --register
-hyro model use mimo-chat
+# or: hyro login --email you@example.com --password ...
+hyro
+```
+
+`hyro` alone opens the HYRO agent chat. The default agent is created automatically on register/login — no manual `curl` step.
+
+```bash
 hyro run "hello from HYRO"
 ```

@@ -40,7 +40,7 @@ export function createProgram(): Command {
       '  memory   Agent memory (search, export, import)\n' +
       '  deploy   Deploy agent to cloud\n' +
       '  mcp      MCP registry & grants\n' +
-      '\nRun `hyro` with no arguments to open the Ink terminal.\n'
+      '\nRun `hyro` with no arguments to open the HYRO agent chat (like `hermes` → Hermes terminal).\n'
     );
   });
 

@@ -23,7 +23,7 @@ const CREDS_PATH = join(HYRO_HOME, 'credentials.json');
 const DEFAULT_CONFIG: CliConfig = {
   apiUrl: process.env.HYRO_API_URL || 'http://localhost:8080',
   model: DEFAULTS.model,
-  activeAgent: null,
+  activeAgent: 'hyro',
 };
 
 const DEFAULT_CREDS: Credentials = { token: null, refreshToken: null, email: null };

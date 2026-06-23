@@ -1,6 +1,8 @@
 import {
   ConflictError,
   DEFAULTS,
+  HYRO_AGENT_META,
+  HYRO_AGENT_SYSTEM_PROMPT,
   NotFoundError,
   newId,
   resolveModelId,
@@ -154,6 +156,23 @@ export class AgentService {
       ],
     );
     return mapAgent(row!);
+  }
+
+  /** Every account gets a built-in HYRO agent (Hermes-style default). Idempotent. */
+  async ensureDefaultHyroAgent(userId: string, model?: string): Promise<Agent> {
+    const existing = await this.db.queryOne<AgentRow>(
+      'SELECT * FROM agents WHERE user_id = $1 AND slug = $2',
+      [userId, HYRO_AGENT_META.slug],
+    );
+    if (existing) return mapAgent(existing);
+    return this.create(userId, {
+      name: HYRO_AGENT_META.name,
+      slug: HYRO_AGENT_META.slug,
+      description: HYRO_AGENT_META.description,
+      systemPrompt: HYRO_AGENT_SYSTEM_PROMPT,
+      model: model ?? HYRO_AGENT_META.model,
+      visibility: 'private',
+    });
   }
 
   private async uniqueSlug(userId: string, base: string): Promise<string> {

@@ -1,5 +1,6 @@
 import { HyroClient } from '@hyro/sdk';
-import { activeApiUrl, clearCreds, loadCreds, saveCreds } from '../config';
+import { activeApiUrl, clearCreds, loadCreds, saveConfig, saveCreds } from '../config';
+import { HYRO_AGENT_META } from '@hyro/core';
 import { CliError, EXIT } from '../lib/errors';
 import { ask, askSecret } from '../lib/prompt';
 import { theme } from '../theme';
@@ -23,6 +24,11 @@ export async function login(opts: LoginOptions = {}): Promise<void> {
       throw new CliError('That API key was rejected.', EXIT.auth);
     });
     saveCreds({ token: opts.key, refreshToken: null, email: user.email });
+    saveConfig({
+      apiUrl: activeApiUrl(),
+      activeAgent: HYRO_AGENT_META.slug,
+      model: user.defaultModel,
+    });
     if (opts.json) {
       console.log(JSON.stringify({ user, loggedIn: true }));
       return;
@@ -45,6 +51,11 @@ export async function login(opts: LoginOptions = {}): Promise<void> {
     token: result.tokens.accessToken,
     refreshToken: result.tokens.refreshToken,
     email: result.user.email,
+  });
+  saveConfig({
+    apiUrl: activeApiUrl(),
+    activeAgent: HYRO_AGENT_META.slug,
+    model: result.user.defaultModel,
   });
 
   if (opts.json) {
