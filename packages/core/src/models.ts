@@ -191,6 +191,21 @@ const MODELS: ModelInfo[] = [
     description: 'Large open Llama model via OpenRouter.',
   },
 
+  // ---- Xiaomi MiMo (OpenAI-compatible) ------------------------------------
+  {
+    id: 'mimo-chat',
+    provider: 'mimo',
+    label: 'Xiaomi MiMo',
+    contextWindow: 128_000,
+    maxOutput: 32_000,
+    supportsTools: true,
+    supportsVision: false,
+    supportsStreaming: true,
+    pricing: { inputPer1M: 0, outputPer1M: 0 },
+    aliases: ['mimo', 'xiaomi-mimo', 'xiaomi'],
+    description: 'Xiaomi MiMo via OpenAI-compatible API (token-plan endpoint).',
+  },
+
   // ---- Embeddings ---------------------------------------------------------
   {
     id: 'local-minilm',

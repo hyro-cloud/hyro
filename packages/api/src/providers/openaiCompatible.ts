@@ -104,3 +104,12 @@ export function createOpenRouterProvider(apiKey: string | undefined): OpenAIComp
     { 'HTTP-Referer': 'https://hyro.cloud', 'X-Title': 'HYRO Cloud' },
   );
 }
+
+/** Xiaomi MiMo — OpenAI-compatible chat completions at a custom base URL. */
+export function createMimoProvider(
+  apiKey: string | undefined,
+  baseUrl: string,
+): OpenAICompatibleProvider {
+  const base = baseUrl.replace(/\/$/, '');
+  return new OpenAICompatibleProvider('mimo', apiKey, `${base}/chat/completions`);
+}

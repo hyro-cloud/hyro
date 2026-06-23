@@ -11,7 +11,7 @@ import type { ModelProvider } from './types';
 import { AnthropicProvider } from './anthropic';
 import { GeminiProvider } from './gemini';
 import { LocalProvider } from './local';
-import { createOpenAIProvider, createOpenRouterProvider } from './openaiCompatible';
+import { createOpenAIProvider, createOpenRouterProvider, createMimoProvider } from './openaiCompatible';
 
 export interface RoutedCompletion extends CompletionResult {
   model: string;
@@ -30,6 +30,10 @@ export class ProviderRouter {
     this.providers.set('openai', createOpenAIProvider(config.providerKeys.openai));
     this.providers.set('gemini', new GeminiProvider(config.providerKeys.gemini));
     this.providers.set('openrouter', createOpenRouterProvider(config.providerKeys.openrouter));
+    this.providers.set(
+      'mimo',
+      createMimoProvider(config.providerKeys.mimo, config.mimoBaseUrl),
+    );
     this.providers.set('local', new LocalProvider());
   }
 
@@ -49,7 +53,10 @@ export class ProviderRouter {
       provider = this.providers.get('local')!;
     }
 
-    const result = await provider.complete({ ...req, model: model.id });
+    const result = await provider.complete({
+      ...req,
+      model: providerId === 'mimo' ? this.config.mimoApiModel : model.id,
+    });
     return { ...result, model: model.id, provider: providerId };
   }
 

@@ -1,0 +1,86 @@
+# ============================================================================
+# HYRO Cloud — API-only stack for VPS (web stays on Vercel).
+#
+# DNS (Niagahoster / any registrar):
+#   api.hyrocloud.lol  →  A  →  159.223.156.212  (your VPS IP)
+#
+# Setup:
+#   cp deploy/.env.prod.example .env.prod
+#   # fill JWT_SECRET, API_KEY_PEPPER, POSTGRES_PASSWORD, MIMO_API_KEY, etc.
+#   docker compose --env-file .env.prod -f docker-compose.api.yml up -d --build
+# ============================================================================
+name: hyro-api-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hyro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hyro}
+      POSTGRES_DB: hyro
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyro -d hyro"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: "8080"
+      DATABASE_URL: postgres://hyro:${POSTGRES_PASSWORD:-hyro}@postgres:5432/hyro
+      REDIS_URL: redis://redis:6379
+      PUBLIC_API_URL: https://api.hyrocloud.lol
+      CORS_ORIGINS: https://hyrocloud.lol,https://www.hyrocloud.lol
+      JWT_SECRET: ${JWT_SECRET}
+      API_KEY_PEPPER: ${API_KEY_PEPPER}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-mimo-chat}
+      MIMO_API_KEY: ${MIMO_API_KEY:-}
+      XIAOMI_BASE_URL: ${XIAOMI_BASE_URL:-https://token-plan-sgp.xiaomimimo.com/v1}
+      MIMO_API_MODEL: ${MIMO_API_MODEL:-mimo}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    command: ["sh", "-c", "node packages/api/dist/db/migrate.js && node packages/api/dist/server.js"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.api:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:

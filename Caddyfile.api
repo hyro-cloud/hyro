@@ -1,0 +1,7 @@
+# API-only reverse proxy — use when the web app stays on Vercel.
+# Used by docker-compose.api.yml
+
+api.hyrocloud.lol {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

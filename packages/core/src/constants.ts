@@ -37,7 +37,7 @@ export type Plan = (typeof PLANS)[number];
 export const MCP_TRANSPORTS = ['stdio', 'http', 'sse'] as const;
 export type McpTransport = (typeof MCP_TRANSPORTS)[number];
 
-export const PROVIDERS = ['anthropic', 'openai', 'gemini', 'openrouter', 'local'] as const;
+export const PROVIDERS = ['anthropic', 'openai', 'gemini', 'openrouter', 'mimo', 'local'] as const;
 export type ProviderId = (typeof PROVIDERS)[number];
 
 export const USAGE_KINDS = ['model', 'tool', 'embedding'] as const;

@@ -45,6 +45,10 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
+  MIMO_API_KEY: z.string().optional(),
+  XIAOMI_BASE_URL: z.string().url().default('https://token-plan-sgp.xiaomimimo.com/v1'),
+  /** Model id sent to the MiMo API (may differ from HYRO registry id `mimo-chat`). */
+  MIMO_API_MODEL: z.string().default('mimo'),
 
   DEFAULT_MODEL: z.string().default(DEFAULTS.model),
   EMBEDDING_MODEL: z.string().default(DEFAULTS.embeddingModel),
@@ -77,6 +81,8 @@ export interface Config {
   rateLimitMax: number;
   rateLimitWindow: string;
   providerKeys: Partial<Record<ProviderId, string>>;
+  mimoBaseUrl: string;
+  mimoApiModel: string;
   defaultModel: string;
   embeddingModel: string;
   embeddingDim: number;
@@ -103,6 +109,7 @@ export function loadConfig(): Config {
   if (e.OPENAI_API_KEY) providerKeys.openai = e.OPENAI_API_KEY;
   if (e.GEMINI_API_KEY) providerKeys.gemini = e.GEMINI_API_KEY;
   if (e.OPENROUTER_API_KEY) providerKeys.openrouter = e.OPENROUTER_API_KEY;
+  if (e.MIMO_API_KEY) providerKeys.mimo = e.MIMO_API_KEY;
 
   cached = {
     env: e.NODE_ENV,
@@ -122,6 +129,8 @@ export function loadConfig(): Config {
     rateLimitMax: e.RATE_LIMIT_MAX,
     rateLimitWindow: e.RATE_LIMIT_WINDOW,
     providerKeys,
+    mimoBaseUrl: e.XIAOMI_BASE_URL,
+    mimoApiModel: e.MIMO_API_MODEL,
     defaultModel: e.DEFAULT_MODEL,
     embeddingModel: e.EMBEDDING_MODEL,
     embeddingDim: e.EMBEDDING_DIM,
