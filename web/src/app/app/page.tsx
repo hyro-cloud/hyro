@@ -1,21 +1,17 @@
 import type { Metadata } from 'next';
 import { LaunchStudioCards, LaunchStudioHero } from '@/components/app/launch-studio';
 import { WebConsole } from '@/components/app/web-console';
+import { HyroDashboardTerminal } from '@/components/landing/hyro-dashboard-terminal';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SITE } from '@/lib/content';
+import { pageMetadata } from '@/lib/site-metadata';
 
 const title = 'Launch App — HYRO Agent Studio';
 const description =
-  'Launch the HYRO agent in your browser: interactive console with memory, MCP, and B20/x402 on Base. Install the CLI from GitHub for full execution.';
+  'Launch HYRO: real dashboard TUI, Base MCP + B20, x402 USDC, Bankr-ready flows. Memory and MCP synced to your VPS brain.';
 
-export const metadata: Metadata = {
-  title,
-  description,
-  alternates: { canonical: '/app' },
-  openGraph: { title, description, type: 'website', url: `${SITE.url}/app`, siteName: SITE.name },
-  twitter: { card: 'summary_large_image', title, description },
-};
+export const metadata: Metadata = pageMetadata({ title, description, path: '/app' });
 
 export default function AppPage() {
   return (
@@ -24,7 +20,40 @@ export default function AppPage() {
       <main className="pt-24 sm:pt-28">
         <section className="shell px-4 pb-20 sm:px-6">
           <LaunchStudioHero />
+
+          <div className="mb-12">
+            <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="tag">
+                  <span className="n">{'//'}</span> dashboard
+                </p>
+                <h2 className="mt-2 font-mono text-lg font-semibold text-hyro-ink sm:text-xl">
+                  HYRO terminal preview
+                </h2>
+              </div>
+              <p className="max-w-md font-mono text-[11px] leading-relaxed text-hyro-dim">
+                CONNECTED SOURCES reflect MCP installs on{' '}
+                <span className="text-hyro-blue">{SITE.apiUrl}</span>
+              </p>
+            </header>
+            <HyroDashboardTerminal />
+          </div>
+
+          <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="tag">
+                <span className="n">{'//'}</span> console
+              </p>
+              <h2 className="mt-2 font-mono text-lg font-semibold text-hyro-ink sm:text-xl">
+                Web console
+              </h2>
+            </div>
+            <p className="font-mono text-[11px] text-hyro-dim">
+              Try commands locally · MCP demos · memory in browser
+            </p>
+          </header>
           <WebConsole />
+
           <LaunchStudioCards />
         </section>
       </main>

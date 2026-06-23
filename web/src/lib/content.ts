@@ -5,6 +5,10 @@ export const SITE = {
   tagline: 'The Operating System for Autonomous Agents',
   description:
     'A terminal-first cloud runtime to create, deploy, execute and monitor autonomous AI agents — with tools, persistent memory and native MCP connectivity.',
+  /** Rich description for Open Graph, Twitter Cards, and link previews (English). */
+  shareDescription:
+    'HYRO Cloud is the operating system for autonomous agents. Install the hyro CLI, open the dashboard TUI, sync memory to your VPS brain, and connect Base MCP (B20 tokens, x402 USDC), GitHub, DexScreener, and Bankr-ready onchain flows. Open source · MiMo · pgvector memory · deny-by-default MCP.',
+  ogImage: '/logo.jpg',
   url: 'https://hyrocloud.lol',
   domain: 'hyrocloud.lol',
   apiUrl: 'https://api.hyrocloud.lol',
@@ -20,6 +24,8 @@ export const SITE = {
   baseAnnouncement: 'https://x.com/buildonbase/status/2067693904909189141',
   baseDevBlog: 'https://blog.base.dev/builder-codes-and-erc-8021-fixing-onchain-attribution',
   baseBuilderDocs: 'https://docs.base.org/base-chain/quickstart/builder-codes',
+  b20Docs: 'https://docs.base.org/get-started/launch-b20-token',
+  bankr: 'https://bankr.bot',
 };
 
 export interface NavLink {
@@ -40,16 +46,63 @@ export const MANTRA = ['Observe', 'Decide', 'Execute', 'Remember'];
 
 export const TICKER = [
   'CLI-first',
-  'Cloud execution',
+  'HYRO Dashboard TUI',
+  'B20 on Base',
+  'Base MCP',
+  'x402 USDC',
+  'Bankr agents',
   'Native MCP',
+  'DexScreener',
+  'GitHub tools',
   'pgvector memory',
-  'Anthropic',
-  'OpenAI',
-  'Gemini',
-  'OpenRouter',
+  'MiMo · Anthropic · OpenAI',
   'Agent marketplace',
   'One-command deploy',
 ];
+
+/** Live integrations shown on landing + launch studio */
+export const INTEGRATIONS = [
+  {
+    id: 'b20',
+    label: 'B20',
+    tag: 'Native Base token standard',
+    href: '/b20',
+    internal: true,
+  },
+  {
+    id: 'base-mcp',
+    label: 'Base MCP',
+    tag: 'get_balance · B20 · launch guide',
+    href: '/base',
+    internal: true,
+  },
+  {
+    id: 'x402',
+    label: 'x402',
+    tag: 'USDC pay-per-call on Base',
+    href: '/b20',
+    internal: true,
+  },
+  {
+    id: 'bankr',
+    label: 'Bankr',
+    tag: 'Onchain agent payments',
+    href: SITE.bankr,
+    internal: false,
+  },
+] as const;
+
+/** CONNECTED SOURCES grid — mirrors real `hyro` dashboard */
+export const CONNECTED_SOURCES = [
+  { key: 'memory', label: 'Memory', connected: true, soon: false },
+  { key: 'mcp', label: 'MCP Hub', connected: true, soon: false },
+  { key: 'base', label: 'Base / B20 / x402', connected: true, soon: false },
+  { key: 'coingecko', label: 'CoinGecko', connected: false, soon: true },
+  { key: 'dexscreener', label: 'DexScreener', connected: true, soon: false },
+  { key: 'github', label: 'GitHub', connected: true, soon: false },
+  { key: 'http', label: 'HTTP Fetch', connected: true, soon: false },
+  { key: 'hyperliquid', label: 'Hyperliquid', connected: false, soon: true },
+] as const;
 
 export type IconKey =
   | 'Terminal'
@@ -161,12 +214,13 @@ export type CliLine =
   | { kind: 'out'; text: string; tone?: 'dim' | 'blue' | 'cyan' | 'green' | 'red' };
 
 export const CLI_COMMANDS = [
-  { cmd: 'hyro login', desc: 'Authenticate with HYRO Cloud' },
-  { cmd: 'hyro run "<task>"', desc: 'Execute an agent run (offline or cloud)' },
-  { cmd: 'hyro agents list', desc: 'List agents in your workspace' },
-  { cmd: 'hyro model use <id>', desc: 'Switch the active LLM provider/model' },
-  { cmd: 'hyro mcp install <pkg>', desc: 'Install an MCP server from the registry' },
-  { cmd: 'hyro memory search <q>', desc: 'Semantic recall across agent memory' },
+  { cmd: 'hyro', desc: 'Open the HYRO dashboard (STATUS · COMMANDS · sources)' },
+  { cmd: 'hyro login', desc: 'Authenticate with HYRO Cloud (api.hyrocloud.lol)' },
+  { cmd: 'connect dexscreener', desc: 'Install + grant DexScreener MCP on VPS' },
+  { cmd: 'connect base', desc: 'Base MCP — B20 balances + launch guide' },
+  { cmd: 'hyro chat', desc: 'Interactive agent chat (same UI as dashboard)' },
+  { cmd: 'hyro mcp list', desc: 'List installed MCP servers' },
+  { cmd: 'hyro memory', desc: 'Goals, facts & policies (synced to VPS)' },
 ];
 
 export const ARCHITECTURE_LAYERS = [
@@ -200,17 +254,38 @@ export const MCP_STEPS = [
 ];
 
 export const LIVE_SCRIPT: CliLine[] = [
-  { kind: 'cmd', text: 'hyro login' },
-  { kind: 'out', text: '✔ Logged in as dev@acme.dev', tone: 'green' },
-  { kind: 'cmd', text: 'hyro model use claude-sonnet-4-6' },
-  { kind: 'out', text: '✔ Active model set to claude-sonnet-4-6', tone: 'green' },
-  { kind: 'cmd', text: 'hyro run "triage new issues in acme/api"' },
-  { kind: 'out', text: '  ○ observe   tools: memory_search, github__search, think', tone: 'dim' },
-  { kind: 'out', text: '  ◆ decide    retrieving context + listing open issues', tone: 'blue' },
-  { kind: 'out', text: '  → tool      github__search_repositories', tone: 'cyan' },
-  { kind: 'out', text: '  ← result    14 open issues · 3 untriaged', tone: 'dim' },
-  { kind: 'out', text: '  ✔ final     labeled 3 issues, opened triage summary', tone: 'green' },
-  { kind: 'out', text: '  succeeded · 5 steps · 1,204→612 tok · $0.012', tone: 'dim' },
+  { kind: 'out', text: '  Xiaomi MiMo · cloud ready    type chat to begin', tone: 'dim' },
+  { kind: 'cmd', text: 'connect dexscreener' },
+  { kind: 'out', text: '✔ dexscreener connected (MCP installed on VPS)', tone: 'green' },
+  { kind: 'cmd', text: 'connect base' },
+  { kind: 'out', text: '✔ base connected — B20 · x402 · Base Sepolia RPC', tone: 'green' },
+  { kind: 'cmd', text: 'chat' },
+  { kind: 'out', text: 'you › cek saldo B20 token 0xB200… di Sepolia', tone: 'dim' },
+  { kind: 'out', text: 'hyro › get_token_balance → 1,000 MYT · b20_launch_guide ready', tone: 'cyan' },
+];
+
+/** Hero / launch dashboard typing loop (after static dashboard frame) */
+export const DASHBOARD_LIVE_SCRIPT: CliLine[] = [
+  { kind: 'cmd', text: 'connect github' },
+  { kind: 'out', text: '✔ github connected (MCP installed on VPS)', tone: 'green' },
+  { kind: 'cmd', text: 'add goal Launch B20 on Sepolia --deadline 2026-07-01' },
+  { kind: 'out', text: '✔ Goal added — synced to VPS memory', tone: 'green' },
+  { kind: 'cmd', text: 'chat' },
+  { kind: 'out', text: 'you › pay 0.01 USDC via x402 for this API call', tone: 'dim' },
+  { kind: 'out', text: 'hyro › x402 settled on Base · builderCode=hyro · Bankr-compatible', tone: 'cyan' },
+];
+
+export const MCP_TERMINAL_DEMO = [
+  '# Install MCP on VPS (from your PC)',
+  'hyro ❯ mcp install dexscreener',
+  '✔ Installed DexScreener (2 tools)',
+  'hyro ❯ mcp install base',
+  '✔ Installed Base / B20 (5 tools)',
+  'hyro ❯ mcp grant base',
+  '✔ Granted * from Base / B20 to hyro',
+  'hyro ❯ mcp tools base',
+  '→ get_chain_info · get_balance · get_token_balance',
+  '→ b20_launch_guide · send_transaction',
 ];
 
 /* ===========================================================================

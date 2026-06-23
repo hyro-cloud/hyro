@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cpu, Database, Network, Terminal } from 'lucide-react';
 import { HyroAsciiBanner } from '@/components/brand/hyro-ascii';
+import { TerminalChrome, terminalFrameClass } from '@/components/landing/terminal-shell';
 import { SITE } from '@/lib/content';
 import { HYRO_AGENT_META, HYRO_AGENT_SYSTEM_PROMPT } from '@/lib/hyro-prompt';
 import { cn } from '@/lib/utils';
@@ -45,10 +46,10 @@ const AGENTS = [
 
 const MCPS = [
   { slug: 'github', tools: 'search_repositories, create_issue' },
-  { slug: 'base', tools: 'get_balance, x402_pay, send_tx' },
+  { slug: 'base', tools: 'get_balance, get_token_balance, b20_launch_guide' },
   { slug: 'dexscreener', tools: 'search_pairs, get_pair' },
-  { slug: 'filesystem', tools: 'read_file, write_file' },
   { slug: 'http', tools: 'fetch' },
+  { slug: 'filesystem', tools: 'read_file, write_file' },
 ];
 
 const MEM_KEY = 'hyro.console.mem.v1';
@@ -97,11 +98,12 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const QUICK = [
   'help',
-  'prompt',
+  'dashboard',
   'status',
-  'github',
-  'run "summarize HYRO Cloud for a new user"',
   'mcp',
+  'b20',
+  'bankr',
+  'run "check B20 balance on Base Sepolia"',
 ];
 
 let LINE_ID = 0;
@@ -135,9 +137,9 @@ export function WebConsole() {
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    push('HYRO Agent Studio — local runtime (in-browser).', 'dim');
-    push(`Repo: ${SITE.github}`, 'dim');
-    push('Type `help`, `prompt`, or run "<task>". Install CLI: `install`', 'dim');
+    push('HYRO Agent Studio — local runtime. Install CLI for real dashboard + VPS brain.', 'dim');
+    push(`API: ${SITE.apiUrl} · B20 · Base MCP · x402 · Bankr`, 'dim');
+    push('Type `help`, `dashboard`, or run "<task>".', 'dim');
     push('', 'dim');
   }, [push]);
 
@@ -233,10 +235,14 @@ export function WebConsole() {
           break;
         case 'status':
           push(`  model     ${model}`, 'mute');
-          push('  network   base (USDC · x402)', 'mute');
-          push('  runtime   local · in-browser', 'mute');
-          push(`  memory    ${loadMem().length} items`, 'mute');
-          push(`  mcp       ${MCPS.length} servers available`, 'mute');
+          push('  network   base sepolia · x402 USDC', 'mute');
+          push('  mcp       github · base · dexscreener · http', 'mute');
+          push('  sources   6/8 connected (see `dashboard`)', 'mute');
+          push(`  memory    ${loadMem().length} items (local)`, 'mute');
+          break;
+        case 'dashboard':
+          push('  Open the real dashboard: run `hyro` in your terminal after CLI install.', 'ink');
+          push('  Preview shown above ↑ — STATUS · CONNECTED SOURCES · hyro ›', 'dim');
           break;
         case 'whoami':
           push('  guest@hyro · local session', 'mute');
@@ -318,9 +324,15 @@ export function WebConsole() {
         case 'base':
         case 'b20':
         case 'x402':
-          push('  HYRO B20 — live Base integration (x402 USDC + Builder Codes).', 'ink');
-          push('  Open /b20 on the site for the full B20 studio page.', 'mute');
-          push('  Try:  run "check ETH price and pay 0.01 USDC on Base"', 'dim');
+          push('  HYRO B20 — Base native tokens + x402 USDC on Base.', 'ink');
+          push('  MCP: connect base → b20_launch_guide, get_token_balance', 'mute');
+          push('  Docs: ' + SITE.b20Docs, 'blue');
+          push('  Open /b20 on this site for the full studio.', 'dim');
+          break;
+        case 'bankr':
+          push('  Bankr — onchain agent payments (USDC on Base).', 'ink');
+          push('  HYRO x402 flows are Bankr-compatible.', 'mute');
+          push('  ' + SITE.bankr, 'blue');
           break;
         case 'run':
         case 'r':
@@ -376,26 +388,19 @@ export function WebConsole() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <StatBadge icon={<Cpu className="h-3 w-3" />} label="model" value={model} />
-        <StatBadge icon={<Network className="h-3 w-3" />} label="network" value="base · USDC" />
-        <StatBadge icon={<Database className="h-3 w-3" />} label="memory" value={`${memCount} items`} />
-        <StatBadge icon={<Terminal className="h-3 w-3" />} label="runtime" value="local" />
+        <StatBadge icon={<Network className="h-3 w-3" />} label="chain" value="base · sepolia" />
+        <StatBadge icon={<Database className="h-3 w-3" />} label="mcp" value="6 connected" />
+        <StatBadge icon={<Terminal className="h-3 w-3" />} label="mode" value="web + hyro TUI" />
       </div>
 
       <div
-        className="flex h-[68vh] min-h-[520px] max-h-[760px] flex-col overflow-hidden rounded-xl border border-hyro-line/80 bg-[#040810] shadow-[0_0_0_1px_rgba(59,140,255,0.06),0_32px_64px_-24px_rgba(0,0,0,0.85)]"
+        className={cn(
+          'flex h-[68vh] min-h-[520px] max-h-[760px] flex-col overflow-hidden',
+          terminalFrameClass,
+        )}
         onClick={() => inputRef.current?.focus()}
       >
-        <div className="flex items-center gap-3 border-b border-hyro-line/70 bg-hyro-panel/80 px-4 py-2.5">
-          <div className="flex gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/90" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]/90" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]/90" />
-          </div>
-          <div className="flex-1 text-center font-mono text-[10px] tracking-wide text-hyro-dim">
-            hyro@studio — web console — {SITE.version}
-          </div>
-          <div className="hidden w-[52px] sm:block" />
-        </div>
+        <TerminalChrome title={`hyro@studio — web console — ${SITE.version}`} />
 
         <div
           ref={scrollRef}
@@ -470,17 +475,14 @@ function StatBadge({ icon, label, value }: { icon: React.ReactNode; label: strin
 
 const HELP: [string, string][] = [
   ['help', 'list commands'],
-  ['prompt', 'show HYRO agent system prompt'],
+  ['dashboard', 'about the real hyro TUI'],
   ['run "<task>"', 'execute an agent run (streamed)'],
-  ['status', 'model · network · memory · runtime'],
-  ['github', 'repository + install steps'],
+  ['status', 'model · network · mcp · memory'],
+  ['mcp [search <q>]', 'list MCP servers (base, github, …)'],
+  ['b20 | x402 | base', 'B20 + Base MCP info'],
+  ['bankr', 'Bankr onchain agent payments'],
   ['install', 'clone & install CLI from GitHub'],
-  ['model [use <id>]', 'show or switch the active model'],
-  ['agents', 'list available agents'],
-  ['mcp [search <q>]', 'list / search MCP servers'],
   ['memory [add|search|clear]', 'local in-browser memory'],
-  ['b20 | x402', 'about B20 + Base payments'],
-  ['login', 'cloud auth (via CLI)'],
   ['clear', 'clear the screen'],
 ];
 

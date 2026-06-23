@@ -50,6 +50,12 @@ const config: Config = {
           cyan: '#38bdf8',
           green: '#34d399',
           red: '#f87171',
+          /** Real CLI dashboard palette (matches `hyro` TUI) */
+          amber: '#ffb000',
+          'amber-hi': '#ffd166',
+          'amber-dim': '#b9760a',
+          term: '#f3ede1',
+          'term-dim': '#6b6456',
         },
       },
       borderRadius: {

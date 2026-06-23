@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { XIcon } from '@/components/ui/x-icon';
 import { MANTRA, SITE } from '@/lib/content';
+import { IntegrationsStrip } from '@/components/landing/integrations-strip';
 
 export function HeroSection() {
   return (
@@ -48,6 +49,10 @@ export function HeroSection() {
               ))}
             </div>
 
+            <div className="mt-6 max-w-sm">
+              <IntegrationsStrip />
+            </div>
+
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
               <Button size="lg" asChild>
                 <Link href="/app">
@@ -73,24 +78,31 @@ export function HeroSection() {
                 </a>
               </Button>
             </div>
-
-            <div className="mt-8 space-y-2">
-              <div className="flex max-w-lg items-center gap-2 rounded-lg border border-hyro-line/80 bg-hyro-panel/50 px-3 py-2.5 font-mono text-xs">
-                <span className="shrink-0 text-hyro-faint">$</span>
-                <code className="flex-1 truncate text-hyro-blue">{SITE.installFromGit}</code>
-                <CopyButton text={SITE.installFromGit} />
-              </div>
-              <p className="font-mono text-[10px] text-hyro-dim">
-                Repo:{' '}
-                <a href={SITE.github} className="text-hyro-blue hover:underline" target="_blank" rel="noopener noreferrer">
-                  github.com/hyro-cloud/hyro
-                </a>
-              </p>
-            </div>
           </motion.div>
 
           <CliWindow className="w-full lg:justify-self-end" />
         </div>
+
+        <motion.div
+          className="mx-auto mt-14 w-full sm:mt-16"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="flex w-full items-center gap-3 rounded-lg border border-hyro-line/80 bg-hyro-panel/50 px-4 py-3 font-mono text-xs sm:px-5 sm:text-sm">
+            <span className="shrink-0 text-hyro-faint">$</span>
+            <code className="min-w-0 flex-1 text-center text-hyro-blue sm:text-left">
+              {SITE.installFromGit}
+            </code>
+            <CopyButton text={SITE.installFromGit} />
+          </div>
+          <p className="mt-2 text-center font-mono text-[10px] text-hyro-dim">
+            Repo:{' '}
+            <a href={SITE.github} className="text-hyro-blue hover:underline" target="_blank" rel="noopener noreferrer">
+              github.com/hyro-cloud/hyro
+            </a>
+          </p>
+        </motion.div>
       </div>
     </section>
   );

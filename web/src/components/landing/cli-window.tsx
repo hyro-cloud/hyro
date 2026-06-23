@@ -3,16 +3,18 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { HyroAsciiBanner } from '@/components/brand/hyro-ascii';
+import { DASHBOARD_LIVE_SCRIPT, SITE } from '@/lib/content';
 import { toneClass, useCliSimulation, type DisplayLine } from '@/hooks/use-cli-simulation';
-import { SITE } from '@/lib/content';
+import { TerminalChrome, terminalFrameClass } from '@/components/landing/terminal-shell';
 import { cn } from '@/lib/utils';
 
 interface CliWindowProps {
   className?: string;
 }
 
+/** Hero terminal — blue HYRO window with live typing demo */
 export function CliWindow({ className }: CliWindowProps) {
-  const { lines, typingText, isTyping } = useCliSimulation(true);
+  const { lines, typingText, isTyping } = useCliSimulation(true, DASHBOARD_LIVE_SCRIPT);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,25 +24,12 @@ export function CliWindow({ className }: CliWindowProps) {
 
   return (
     <motion.div
-      className={cn(
-        'relative overflow-hidden rounded-xl border border-hyro-line/80 bg-[#040810] shadow-[0_0_0_1px_rgba(59,140,255,0.06),0_32px_64px_-24px_rgba(0,0,0,0.85),0_0_48px_-16px_rgba(59,140,255,0.18)]',
-        className,
-      )}
+      className={cn('relative', terminalFrameClass, className)}
       initial={{ opacity: 0, y: 24, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex items-center gap-3 border-b border-hyro-line/70 bg-hyro-panel/80 px-4 py-2.5">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/90" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]/90" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]/90" />
-        </div>
-        <div className="flex-1 text-center font-mono text-[10px] tracking-wide text-hyro-dim">
-          hyro — {SITE.version} — zsh
-        </div>
-        <div className="hidden w-[52px] sm:block" />
-      </div>
+      <TerminalChrome title={`hyro — ${SITE.version} — zsh`} />
 
       <div
         ref={scrollRef}
@@ -55,8 +44,8 @@ export function CliWindow({ className }: CliWindowProps) {
         ))}
 
         {(isTyping || typingText) && (
-          <div className="whitespace-pre-wrap">
-            <Prompt />
+          <div className="mt-1 whitespace-pre-wrap">
+            <span className="text-hyro-blue">hyro ❯ </span>
             <span className="text-hyro-ink">{typingText}</span>
             <Cursor />
           </div>
@@ -64,7 +53,7 @@ export function CliWindow({ className }: CliWindowProps) {
 
         {!isTyping && !typingText && (
           <div className="mt-1">
-            <Prompt />
+            <span className="text-hyro-blue">hyro ❯ </span>
             <Cursor />
           </div>
         )}
@@ -83,7 +72,7 @@ function TerminalLine({ line }: { line: DisplayLine }) {
     <div className="whitespace-pre-wrap break-words">
       {line.kind === 'cmd' ? (
         <span>
-          <Prompt />
+          <span className="text-hyro-blue">hyro ❯ </span>
           <span className="text-hyro-ink">{line.text}</span>
         </span>
       ) : (
@@ -91,10 +80,6 @@ function TerminalLine({ line }: { line: DisplayLine }) {
       )}
     </div>
   );
-}
-
-function Prompt() {
-  return <span className="text-hyro-blue">hyro ❯ </span>;
 }
 
 function Cursor() {

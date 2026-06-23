@@ -46,7 +46,7 @@ function nextId(): string {
  * Drives the hero CLI window: types commands char-by-char, reveals output,
  * then loops the script from content.ts.
  */
-export function useCliSimulation(enabled = true): SimulationState {
+export function useCliSimulation(enabled = true, script: CliLine[] = LIVE_SCRIPT): SimulationState {
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [typingText, setTypingText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -75,7 +75,7 @@ export function useCliSimulation(enabled = true): SimulationState {
     };
 
     const processScript = () => {
-      const entry = LIVE_SCRIPT[scriptIdx.current];
+      const entry = script[scriptIdx.current];
       if (!entry) {
         schedule(() => {
           reset();
@@ -130,7 +130,7 @@ export function useCliSimulation(enabled = true): SimulationState {
       mounted.current = false;
       clearTimeout(timeout);
     };
-  }, [enabled, reset]);
+  }, [enabled, reset, script]);
 
   return { lines, typingText, isTyping };
 }
