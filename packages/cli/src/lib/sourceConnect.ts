@@ -69,7 +69,7 @@ async function ensureGranted(client: HyroClient, slug: string, agentRef?: string
   if (!server) return;
 
   const { grants } = await client.mcp.grants(agent.id);
-  if (grants.some((g) => g.serverId === server.id)) return;
+  if (grants.some((g) => g.mcpServerId === server.id)) return;
 
   await client.mcp.grant({ agentId: agent.id, serverId: server.id, allowedTools: ['*'] });
 }
