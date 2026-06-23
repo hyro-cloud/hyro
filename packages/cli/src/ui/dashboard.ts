@@ -46,6 +46,7 @@ function clearScreen(): void {
 
 function providerLabel(model: string): string {
   const info = getModel(model);
+  if (info?.provider === 'mimo' || /mimo/i.test(model)) return 'Xiaomi MiMo';
   switch (info?.provider) {
     case 'anthropic':
       return 'Anthropic Claude';
@@ -58,7 +59,7 @@ function providerLabel(model: string): string {
     case 'mimo':
       return 'Xiaomi MiMo';
     default:
-      return 'Local runtime';
+      return /mimo/i.test(model) ? 'Xiaomi MiMo' : 'Cloud runtime';
   }
 }
 
@@ -214,16 +215,24 @@ function renderHelp(): void {
 }
 
 export async function runDashboard(): Promise<void> {
+  let mcpHint = '';
   if (activeToken()) {
     try {
-      await autoConnectFreeSources();
-    } catch {
-      /* VPS registry may need seed — connect manually */
+      const failures = await autoConnectFreeSources();
+      if (failures.length) {
+        mcpHint = theme.amberDim(
+          `  MCP auto-connect failed — run on VPS: docker compose -f docker-compose.api.yml exec api node packages/api/dist/db/seed.js`,
+        );
+        for (const f of failures) mcpHint += `\n  ${theme.dim('·')} ${theme.red(f)}`;
+      }
+    } catch (err) {
+      mcpHint = `  ${theme.dim('MCP setup:')} ${theme.red((err as Error).message)}`;
     }
   }
 
   clearScreen();
   process.stdout.write((await renderDashboard()) + '\n');
+  if (mcpHint) process.stdout.write(mcpHint + '\n');
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   let exited = false;

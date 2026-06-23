@@ -108,8 +108,9 @@ export async function disconnectMcpSource(key: string): Promise<void> {
 }
 
 /** Auto-install free public MCP servers (DexScreener, HTTP) for the HYRO agent. */
-export async function autoConnectFreeSources(): Promise<void> {
-  if (!activeToken()) return;
+export async function autoConnectFreeSources(): Promise<string[]> {
+  const failures: string[] = [];
+  if (!activeToken()) return failures;
 
   const client = requireAuth();
   for (const slug of FREE_AUTO_CONNECT) {
@@ -118,8 +119,9 @@ export async function autoConnectFreeSources(): Promise<void> {
       await ensureGranted(client, slug);
       const key = Object.entries(SOURCE_MCP_SLUG).find(([, s]) => s === slug)?.[0];
       if (key) toggleSource(key, true);
-    } catch {
-      /* registry may be empty on fresh VPS — user can run hyro mcp install manually */
+    } catch (err) {
+      failures.push(`${slug}: ${(err as Error).message}`);
     }
   }
+  return failures;
 }

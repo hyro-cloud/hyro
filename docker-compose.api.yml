@@ -69,7 +69,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-    command: ["sh", "-c", "node packages/api/dist/db/migrate.js && node packages/api/dist/server.js"]
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    command: ["sh", "-c", "node packages/api/dist/db/migrate.js && node packages/api/dist/db/seed.js && node packages/api/dist/server.js"]
 
   caddy:
     image: caddy:2-alpine
