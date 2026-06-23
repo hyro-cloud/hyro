@@ -44,20 +44,24 @@ export interface Workspace {
 export interface DataSource {
   key: string;
   label: string;
-  /** Local sources are always connected; others connect when enabled. */
+  /** Local sources are always connected; others need MCP install on VPS. */
   local?: boolean;
+  /** Shown in dashboard but no MCP server in registry yet. */
+  comingSoon?: boolean;
+  /** Hint shown in setup (e.g. required env var). */
+  setupHint?: string;
 }
 
 /** Catalog of data sources HYRO agents can pull from (B20/Base-flavored). */
 export const DATA_SOURCES: DataSource[] = [
   { key: 'memory', label: 'Memory', local: true },
   { key: 'mcp', label: 'MCP Hub', local: true },
-  { key: 'base', label: 'Base / x402' },
-  { key: 'coingecko', label: 'CoinGecko' },
+  { key: 'base', label: 'Base / x402', setupHint: 'needs BASE_RPC_URL on VPS' },
+  { key: 'coingecko', label: 'CoinGecko', comingSoon: true },
   { key: 'dexscreener', label: 'DexScreener' },
-  { key: 'github', label: 'GitHub' },
+  { key: 'github', label: 'GitHub', setupHint: 'needs GITHUB_TOKEN on VPS' },
   { key: 'http', label: 'HTTP Fetch' },
-  { key: 'hyperliquid', label: 'Hyperliquid' },
+  { key: 'hyperliquid', label: 'Hyperliquid', comingSoon: true },
 ];
 
 const WS_PATH = join(HYRO_HOME, 'workspace.json');
@@ -142,14 +146,14 @@ export function toggleSource(key: string, on: boolean): Workspace {
   return saveWorkspace(ws);
 }
 
-/** Resolve which sources are "connected" (local always; cloud needs a token). */
+/** @deprecated Use resolveConnectedSources() from sourceConnect.ts */
 export function connectedSources(ws: Workspace, hasToken: boolean): Set<string> {
   const set = new Set<string>();
   for (const s of DATA_SOURCES) {
     if (s.local) set.add(s.key);
-    else if (ws.sources.includes(s.key)) set.add(s.key);
+    else if (!s.comingSoon && ws.sources.includes(s.key)) set.add(s.key);
   }
-  if (hasToken) set.add('base'); // cloud unlocks onchain sources
+  if (hasToken) set.add('base');
   return set;
 }
 

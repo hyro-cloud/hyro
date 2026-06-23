@@ -17,6 +17,8 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
     if (activeToken()) {
       try {
         await ensureHyroAgent(getClient());
+        const { autoConnectFreeSources } = await import('./lib/sourceConnect.js');
+        await autoConnectFreeSources();
       } catch {
         /* offline — the dashboard still works locally */
       }

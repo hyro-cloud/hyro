@@ -9,12 +9,16 @@ import { print, printError, success } from '../lib/output';
 import { theme, renderLogo } from '../theme';
 import {
   DATA_SOURCES,
-  connectedSources,
   loadWorkspace,
   setGovernance,
-  toggleSource,
   type Governance,
 } from '../lib/workspace';
+import {
+  connectMcpSource,
+  disconnectMcpSource,
+  resolveConnectedSources,
+  autoConnectFreeSources,
+} from '../lib/sourceConnect';
 import {
   addFact,
   addGoal,
@@ -67,7 +71,7 @@ export async function renderDashboard(memory?: MemorySnapshot): Promise<string> 
   const snap = memory ?? (await fetchMemorySnapshot());
   const c = memoryCounts(snap);
   const hasToken = Boolean(activeToken());
-  const connected = connectedSources(ws, hasToken);
+  const connected = await resolveConnectedSources(hasToken);
 
   const status = (label: string, value: string) =>
     `  ${theme.green('●')} ${theme.ink(label.padEnd(13))} ${value}`;
@@ -109,7 +113,12 @@ export async function renderDashboard(memory?: MemorySnapshot): Promise<string> 
   for (let i = 0; i < DATA_SOURCES.length; i += 4) {
     const cells = DATA_SOURCES.slice(i, i + 4).map((s) => {
       const on = connected.has(s.key);
-      return padV(`${dot(on)} ${on ? theme.ink(s.label) : theme.dim(s.label)}`, cellW);
+      const label = s.comingSoon
+        ? theme.faint(`${s.label} (soon)`)
+        : on
+          ? theme.ink(s.label)
+          : theme.dim(s.label);
+      return padV(`${dot(on)} ${label}`, cellW);
     });
     out.push('  ' + cells.join(''));
   }
@@ -151,9 +160,9 @@ async function renderMemory(): Promise<void> {
   print('');
 }
 
-function renderSetup(): void {
+async function renderSetup(): Promise<void> {
   const cfg = loadConfig();
-  const ws = loadWorkspace();
+  const connected = await resolveConnectedSources(Boolean(activeToken()));
   print('');
   print(theme.bold(theme.amber('SETUP')));
   print(`  ${theme.dim('LLM model')}    ${theme.amber(cfg.model)}   ${theme.dim('→ setup model <id>')}`);
@@ -162,10 +171,22 @@ function renderSetup(): void {
     `  ${theme.dim('Auth')}         ${activeToken() ? theme.green('logged in — memory syncs to VPS') : theme.dim('guest — run `hyro login`')}`,
   );
   print('');
-  print(theme.bold(theme.amber('DATA SOURCES')) + theme.dim('  → connect <key> / disconnect <key>'));
+  print(
+    theme.bold(theme.amber('DATA SOURCES')) +
+      theme.dim('  → connect <key> installs MCP on VPS · disconnect removes it'),
+  );
   for (const s of DATA_SOURCES) {
-    const on = s.local || ws.sources.includes(s.key);
-    print(`  ${dot(on)} ${theme.ink(s.key.padEnd(13))} ${theme.dim(s.label)}${s.local ? theme.faint('  (built-in)') : ''}`);
+    const on = connected.has(s.key);
+    const hint = s.comingSoon
+      ? theme.faint('  (coming soon)')
+      : s.setupHint
+        ? theme.faint(`  (${s.setupHint})`)
+        : s.local
+          ? theme.faint('  (built-in)')
+          : on
+            ? theme.green('  (MCP active)')
+            : theme.dim('  → connect ' + s.key);
+    print(`  ${dot(on)} ${theme.ink(s.key.padEnd(13))} ${theme.dim(s.label)}${hint}`);
   }
   print('');
 }
@@ -193,6 +214,14 @@ function renderHelp(): void {
 }
 
 export async function runDashboard(): Promise<void> {
+  if (activeToken()) {
+    try {
+      await autoConnectFreeSources();
+    } catch {
+      /* VPS registry may need seed — connect manually */
+    }
+  }
+
   clearScreen();
   process.stdout.write((await renderDashboard()) + '\n');
 
@@ -273,8 +302,8 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
     return void (await rerender());
   if (lower === 'chat') return 'chat';
   if (lower === 'memory' || lower === 'mem') return void (await renderMemory());
-  if (lower === 'setup') return renderSetup();
-  if (lower === 'sources') return renderSetup();
+  if (lower === 'setup') return void (await renderSetup());
+  if (lower === 'sources') return void (await renderSetup());
 
   if (head === 'governance') {
     const mode = parts[1]?.toLowerCase();
@@ -336,8 +365,13 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
     const key = parts[1]?.toLowerCase();
     if (!key || !DATA_SOURCES.some((s) => s.key === key))
       return void printError(`Unknown source. Try: ${DATA_SOURCES.map((s) => s.key).join(', ')}`);
-    toggleSource(key, head === 'connect');
-    success(`${key} ${head === 'connect' ? 'connected' : 'disconnected'}.`);
+    if (head === 'connect') {
+      await connectMcpSource(key);
+      success(`${key} connected (MCP installed on VPS).`);
+    } else {
+      await disconnectMcpSource(key);
+      success(`${key} disconnected.`);
+    }
     await rerender();
     return;
   }
