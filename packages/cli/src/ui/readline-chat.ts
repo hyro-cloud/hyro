@@ -1,9 +1,19 @@
+import { ApiError } from '@hyro/sdk';
 import { executeRun } from '../commands/run';
 import { ask } from '../lib/prompt';
-import { print } from '../lib/output';
-import { renderBanner } from '../theme';
+import { print, printError } from '../lib/output';
+import { renderBanner, theme } from '../theme';
 import { CLI_VERSION } from '../version';
 import type { ChatAppProps } from './ink/chat';
+
+function formatChatError(err: unknown): void {
+  if (err instanceof ApiError && err.statusCode === 401) {
+    printError('Session expired or invalid.');
+    print(theme.dim("  Run 'hyro login' to sign in again."));
+    return;
+  }
+  printError((err as Error).message || 'Unexpected error');
+}
 
 /** Simple chat loop for terminals where Ink raw mode fails (e.g. Windows CMD). */
 export async function launchReadlineChat({
@@ -29,7 +39,7 @@ export async function launchReadlineChat({
         json: false,
       });
     } catch (err) {
-      print(`Error: ${(err as Error).message}`);
+      formatChatError(err);
     }
     print('');
   }
