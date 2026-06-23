@@ -180,19 +180,38 @@ export class AgentService {
     return mapAgent(row!);
   }
 
-  /** Every account gets a built-in HYRO agent (Hermes-style default). Idempotent. */
+  /** Every account gets a built-in HYRO agent (Hermes-style default). Idempotent; syncs brain on login. */
   async ensureDefaultHyroAgent(userId: string, model?: string): Promise<Agent> {
     const existing = await this.db.queryOne<AgentRow>(
       'SELECT * FROM agents WHERE user_id = $1 AND slug = $2',
       [userId, HYRO_AGENT_META.slug],
     );
-    if (existing) return mapAgent(existing);
+    const resolvedModel = model
+      ? resolveModelId(model) ?? model
+      : existing?.model ?? HYRO_AGENT_META.model;
+
+    if (existing) {
+      const row = await this.db.queryOne<AgentRow>(
+        `UPDATE agents SET name = $3, description = $4, system_prompt = $5, model = $6, updated_at = now()
+         WHERE user_id = $1 AND slug = $2 RETURNING *`,
+        [
+          userId,
+          HYRO_AGENT_META.slug,
+          HYRO_AGENT_META.name,
+          HYRO_AGENT_META.description,
+          HYRO_AGENT_SYSTEM_PROMPT,
+          resolvedModel,
+        ],
+      );
+      return mapAgent(row!);
+    }
+
     return this.create(userId, {
       name: HYRO_AGENT_META.name,
       slug: HYRO_AGENT_META.slug,
       description: HYRO_AGENT_META.description,
       systemPrompt: HYRO_AGENT_SYSTEM_PROMPT,
-      model: model ?? HYRO_AGENT_META.model,
+      model: resolvedModel,
       visibility: 'private',
     });
   }
