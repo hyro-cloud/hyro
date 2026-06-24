@@ -1,39 +1,42 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Reveal } from '@/components/fx/reveal';
 
 interface SectionShellProps {
   id?: string;
   label: string;
+  /** ZAPP-style section number, e.g. "01". Rendered before the label. */
+  index?: string;
   title: string;
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Center the section head (ZAPP default). Set false for left-aligned. */
+  center?: boolean;
   bleed?: boolean;
 }
 
 export function SectionShell({
   id,
   label,
+  index,
   title,
   description,
   children,
   className,
+  center = true,
   bleed = false,
 }: SectionShellProps) {
   return (
-    <section id={id} className={cn('scroll-mt-24 py-16 sm:py-20', className)}>
-      <div className={cn(!bleed && 'shell px-4 sm:px-6')}>
-        <header className="mb-10 max-w-2xl">
-          <p className="tag">
-            <span className="n">{'//'}</span> {label}
+    <section id={id} className={className}>
+      <div className={cn('z-section', center && 'z-section--center', bleed && 'max-w-none')}>
+        <Reveal as="header" className="z-section__head">
+          <p className="z-section__eyebrow">
+            {index ? `${index} // ${label}` : `// ${label}`}
           </p>
-          <h2 className="mt-3 font-mono text-2xl font-semibold tracking-tight text-hyro-ink sm:text-3xl">
-            {title}
-          </h2>
-          {description && (
-            <p className="mt-4 text-base leading-relaxed text-hyro-mute">{description}</p>
-          )}
-        </header>
+          <h2 className="z-section__title">{title}</h2>
+          {description && <p className="z-section__sub">{description}</p>}
+        </Reveal>
         {children}
       </div>
     </section>

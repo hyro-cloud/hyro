@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { SectionShell } from '@/components/landing/section-shell';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { XIcon } from '@/components/ui/x-icon';
 import {
@@ -54,11 +53,11 @@ const item = {
 
 function TerminalCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-md border border-hyro-line bg-hyro-panel/80 backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-hyro-line bg-hyro-blue/[0.04] px-4 py-2.5">
+    <div className="overflow-hidden rounded-[10px] border border-hyro-line/20 bg-hyro-panel/80 shadow-[0_24px_64px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+      <div className="flex items-center gap-2 border-b border-hyro-line/20 bg-hyro-panel/30 px-4 py-2.5">
         <span className="h-2.5 w-2.5 rounded-full bg-hyro-red/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-hyro-green/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-hyro-blue/80" />
         <span className="ml-2 font-mono text-xs text-hyro-dim">{title}</span>
       </div>
       <div className="space-y-1 p-5 font-mono text-[13px] leading-relaxed">{children}</div>
@@ -70,19 +69,19 @@ export function BaseShowcase() {
   return (
     <>
       {/* ---- Hero ---- */}
-      <section className="scroll-mt-24 pt-28 pb-12 sm:pt-32">
-        <div className="shell grid items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="scroll-mt-24 pb-12 pt-32 sm:pt-40">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Badge variant="live">
-              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulseDot rounded-full bg-hyro-blue" />
+            <p className="z-section__eyebrow !mb-5 flex items-center">
+              <span className="dot dot--live" />
               {BASE_HERO.badge}
-            </Badge>
-            <h1 className="mt-5 font-mono text-4xl font-semibold tracking-tight text-hyro-ink sm:text-5xl">
-              HYRO <span className="font-bold text-hyro-blue term-glow">B20</span>
+            </p>
+            <h1 className="hero-wordmark text-[clamp(3rem,9vw,6rem)]">
+              HYRO&nbsp;<span className="hero-char">B20</span>
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-hyro-mute sm:text-lg">
               {BASE_HERO.subtitle}
@@ -239,11 +238,11 @@ export function BaseShowcase() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             viewport={{ once: true, margin: '-80px' }}
           >
-            <div className="overflow-hidden rounded-md border border-hyro-line bg-hyro-panel/80 backdrop-blur-sm">
-              <div className="flex items-center gap-2 border-b border-hyro-line bg-hyro-blue/[0.04] px-4 py-2.5">
+            <div className="overflow-hidden rounded-[10px] border border-hyro-line/20 bg-hyro-panel/80 shadow-[0_24px_64px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+              <div className="flex items-center gap-2 border-b border-hyro-line/20 bg-hyro-panel/30 px-4 py-2.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-hyro-red/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-hyro-green/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-hyro-blue/80" />
                 <span className="ml-2 font-mono text-xs text-hyro-dim">hyro/base.ts</span>
               </div>
               <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed text-hyro-mute">

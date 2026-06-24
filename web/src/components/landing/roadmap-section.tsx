@@ -10,6 +10,7 @@ export function RoadmapSection() {
   return (
     <SectionShell
       id="roadmap"
+      index="07"
       label="roadmap"
       title="Shipping in public"
       description="Foundation is live. Runtime hardening, MCP GA, and marketplace teams are next on the roadmap."

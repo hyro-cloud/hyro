@@ -13,6 +13,7 @@ export function FaqSection() {
   return (
     <SectionShell
       id="faq"
+      index="08"
       label="faq"
       title="Questions from the terminal"
       description="Everything you need to know before your first `hyro run`."

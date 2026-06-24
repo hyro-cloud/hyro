@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { XIcon } from '@/components/ui/x-icon';
 import { NAV_LINKS, SITE, type NavLink } from '@/lib/content';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <a href={SITE.x} target="_blank" rel="noopener noreferrer" aria-label="X @HyroCloud">
               <XIcon className="h-3.5 w-3.5" />
@@ -66,7 +68,9 @@ export function SiteHeader() {
           </Button>
         </div>
 
-        <button
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle className="h-9 px-2" />
+          <button
           type="button"
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-hyro-line/80 text-hyro-mute md:hidden"
           onClick={() => setOpen((v) => !v)}
@@ -75,6 +79,7 @@ export function SiteHeader() {
         >
           {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
+        </div>
       </div>
 
       {open && (
@@ -84,6 +89,7 @@ export function SiteHeader() {
               <NavItem key={link.href} link={link} mobile onNavigate={() => setOpen(false)} />
             ))}
             <div className="mt-3 flex flex-col gap-2 border-t border-hyro-line/70 pt-4">
+              <ThemeToggle className="w-full justify-center" />
               <Button variant="outline" asChild>
                 <a href={SITE.x} target="_blank" rel="noopener noreferrer">
                   <XIcon className="h-4 w-4" />
@@ -119,20 +125,38 @@ function NavItem({
 }) {
   const base = mobile
     ? 'rounded-md px-3 py-2.5 font-mono text-xs uppercase tracking-[0.12em]'
-    : 'rounded-md px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em]';
+    : 'nav-glitch rounded-md px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em]';
+  const dataText = mobile ? undefined : link.label;
 
   if (link.highlight) {
+    const cls = cn(
+      base,
+      'font-bold text-hyro-blue term-glow transition hover:text-hyro-blue-hi',
+    );
+    if (link.href.startsWith('/')) {
+      return (
+        <Link href={link.href} onClick={onNavigate} className={cls}>
+          {link.label}
+        </Link>
+      );
+    }
     return (
-      <a
-        href={link.href}
-        onClick={onNavigate}
-        className={cn(
-          base,
-          'font-bold text-hyro-blue term-glow transition hover:text-hyro-blue-hi',
-        )}
-      >
+      <a href={link.href} onClick={onNavigate} className={cls} data-text={dataText}>
         {link.label}
       </a>
+    );
+  }
+
+  if (link.href.startsWith('/')) {
+    return (
+      <Link
+        href={link.href}
+        onClick={onNavigate}
+        className={cn(base, 'text-hyro-mute transition hover:text-hyro-blue')}
+        data-text={dataText}
+      >
+        {link.label}
+      </Link>
     );
   }
 

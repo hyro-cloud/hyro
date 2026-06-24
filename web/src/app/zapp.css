@@ -1,0 +1,682 @@
+/* ============================================================
+   ZAPP design system — ported to HYRO, recolored ELECTRIC BLUE.
+   Layout/structure mirrors the standalone ZAPP landing page.
+   Accent (--volt) is HYRO blue instead of volt-green.
+   ============================================================ */
+
+:root,
+html.light {
+  --z-bg: #ffffff;
+  --z-bg-2: #f8fafc;
+  --z-bg-3: #f1f5f9;
+  --z-panel: rgba(59, 140, 255, 0.04);
+  --z-line: rgba(37, 99, 235, 0.12);
+  --z-line-strong: rgba(37, 99, 235, 0.22);
+  --z-text: #2563eb;
+  --z-muted: #3b82f6;
+  --volt: #3b8cff;
+  --volt-hi: #2563eb;
+  --volt-dim: rgba(59, 140, 255, 0.12);
+  --cyan: #0ea5e9;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --z-dark-on-volt: #ffffff;
+  --z-font-ui: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
+  --z-font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark {
+  --z-bg: #040810;
+  --z-bg-2: #070c16;
+  --z-bg-3: #0b1220;
+  --z-panel: rgba(255, 255, 255, 0.025);
+  --z-line: rgba(255, 255, 255, 0.08);
+  --z-line-strong: rgba(255, 255, 255, 0.16);
+  --z-text: #e9eefc;
+  --z-muted: #8a93a6;
+  --volt: #3b8cff;
+  --volt-hi: #6ba8ff;
+  --volt-dim: rgba(59, 140, 255, 0.14);
+  --cyan: #41e6ff;
+  --warn: #ffb02e;
+  --danger: #ff4d5e;
+  --z-dark-on-volt: #04101f;
+}
+
+.zmono {
+  font-family: var(--z-font-mono);
+}
+.zaccent {
+  color: var(--volt);
+}
+
+/* ---------- status dots ---------- */
+.z .dot,
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+.dot--live {
+  background: var(--volt);
+  box-shadow: 0 0 8px var(--volt);
+  animation: zpulse 2s infinite;
+}
+.dot--warn {
+  background: var(--warn);
+  box-shadow: 0 0 8px var(--warn);
+}
+.dot--off {
+  background: #3a4053;
+}
+@keyframes zpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.z-hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.z-hero__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.z-hero__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 100% 72px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 72px 100%;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 75%);
+}
+.z-hero__content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 112px 24px 60px;
+}
+.z-hero__eyebrow {
+  font-family: var(--z-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--z-muted);
+  margin-bottom: 22px;
+  text-transform: uppercase;
+}
+.z-hero__title {
+  font-family: var(--z-font-ui);
+  font-size: clamp(72px, 19vw, 240px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  display: flex;
+  justify-content: center;
+  text-shadow: 0 0 80px rgba(59, 140, 255, 0.25);
+  user-select: none;
+}
+.z-hero__char {
+  display: inline-block;
+  background: linear-gradient(180deg, #eef4fc 0%, #6ba8ff 55%, #2563eb 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transition: filter 0.18s, transform 0.3s var(--ease-out);
+}
+.z-hero__char:hover {
+  filter: drop-shadow(0 0 28px rgba(59, 140, 255, 0.8));
+  transform: skewX(-6deg);
+}
+.z-hero__sub {
+  font-family: var(--z-font-mono);
+  margin-top: 22px;
+  font-size: clamp(12px, 1.6vw, 16px);
+  letter-spacing: 0.32em;
+  color: var(--z-text);
+  text-transform: uppercase;
+}
+.z-hero__copy {
+  margin: 18px auto 0;
+  max-width: 520px;
+  color: var(--z-muted);
+  font-size: 15px;
+}
+.z-hero__actions {
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.z-hero__hint {
+  font-family: var(--z-font-mono);
+  margin-top: 34px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #4a5266;
+  text-transform: uppercase;
+}
+.z-hero__scroll {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--z-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--z-muted);
+}
+.z-hero__scroll-line {
+  width: 1px;
+  height: 44px;
+  background: var(--z-line-strong);
+  position: relative;
+  overflow: hidden;
+}
+.z-hero__scroll-line::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--volt);
+  animation: zscrollDrip 1.8s var(--ease-out) infinite;
+}
+@keyframes zscrollDrip {
+  0% {
+    top: -50%;
+  }
+  100% {
+    top: 110%;
+  }
+}
+
+/* spark burst */
+.spark {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--volt);
+  box-shadow: 0 0 8px var(--volt);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.z-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 30px;
+  border-radius: 4px;
+  font-family: var(--z-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  overflow: hidden;
+  transition: color 0.3s, box-shadow 0.3s, border-color 0.3s, background 0.3s;
+}
+.z-btn--primary {
+  background: var(--volt);
+  color: var(--z-dark-on-volt);
+  box-shadow: 0 0 28px rgba(59, 140, 255, 0.22);
+}
+.z-btn--primary:hover {
+  box-shadow: 0 0 56px rgba(59, 140, 255, 0.5);
+  background: var(--volt-hi);
+}
+.z-btn--primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+.z-btn--primary:hover::before {
+  transition: transform 0.7s var(--ease-out);
+  transform: translateX(120%);
+}
+.z-btn--ghost {
+  border: 1px solid var(--z-line-strong);
+  color: var(--z-text);
+  background: rgba(255, 255, 255, 0.02);
+}
+.z-btn--ghost:hover {
+  border-color: var(--volt);
+  color: var(--volt);
+  box-shadow: 0 0 24px rgba(59, 140, 255, 0.14);
+}
+.z-btn__icon {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+.z-stats {
+  border-top: 1px solid var(--z-line);
+  border-bottom: 1px solid var(--z-line);
+  background: var(--z-bg-2);
+}
+.z-stats__note {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 20px 0;
+  font-family: var(--z-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--z-muted);
+  text-transform: uppercase;
+}
+.z-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.z-stat {
+  padding: clamp(32px, 4vw, 56px) 20px;
+  text-align: center;
+  border-right: 1px solid var(--z-line);
+  position: relative;
+  overflow: hidden;
+}
+.z-stat:last-child {
+  border-right: 0;
+}
+.z-stat::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--volt);
+  transform: scaleX(0);
+  transition: transform 0.5s var(--ease-out);
+}
+.z-stat:hover::after {
+  transform: scaleX(1);
+}
+.z-stat__num {
+  display: block;
+  font-family: var(--z-font-mono);
+  font-size: clamp(30px, 4.5vw, 54px);
+  font-weight: 700;
+  color: var(--volt);
+  text-shadow: 0 0 28px rgba(59, 140, 255, 0.3);
+}
+.z-stat__label {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--z-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--z-muted);
+  text-transform: uppercase;
+}
+@media (max-width: 760px) {
+  .z-stats__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .z-stat:nth-child(2) {
+    border-right: 0;
+  }
+  .z-stat:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--z-line);
+  }
+}
+
+/* ============================================================
+   MARQUEE
+   ============================================================ */
+.z-marquee {
+  overflow: hidden;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--z-line);
+  background: var(--z-bg-2);
+}
+.z-marquee__track {
+  display: flex;
+  white-space: nowrap;
+  width: max-content;
+  font-family: var(--z-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--z-muted);
+  text-transform: uppercase;
+  animation: zmarquee 28s linear infinite;
+}
+.z-marquee:hover .z-marquee__track {
+  animation-play-state: paused;
+}
+@keyframes zmarquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.z-section {
+  padding: clamp(90px, 12vw, 150px) clamp(20px, 5vw, 64px);
+  max-width: 1380px;
+  margin: 0 auto;
+  scroll-margin-top: 90px;
+}
+.z-section__head {
+  margin-bottom: clamp(44px, 6vw, 72px);
+  max-width: 820px;
+}
+.z-section--center .z-section__head {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.z-section__eyebrow {
+  font-family: var(--z-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  color: var(--volt);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+.z-section__title {
+  font-family: var(--z-font-ui);
+  font-size: clamp(36px, 6vw, 76px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+}
+.z-section__sub {
+  color: var(--z-muted);
+  font-size: 16px;
+  max-width: 640px;
+}
+.z-section--center .z-section__sub {
+  margin-left: auto;
+  margin-right: auto;
+}
+.z-section__sub code {
+  font-family: var(--z-font-mono);
+  color: var(--volt);
+  background: var(--volt-dim);
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+/* ============================================================
+   GENERIC ZAPP CARD GRID (agents / system / features)
+   ============================================================ */
+.z-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.z-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.z-grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 1024px) {
+  .z-grid,
+  .z-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .z-grid,
+  .z-grid--4,
+  .z-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.z-card {
+  position: relative;
+  background: var(--z-panel);
+  border: 1px solid var(--z-line);
+  border-radius: 10px;
+  padding: 26px;
+  transform-style: preserve-3d;
+  transition: border-color 0.35s, background 0.35s, transform 0.4s var(--ease-out),
+    box-shadow 0.4s;
+  overflow: hidden;
+}
+.z-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(59, 140, 255, 0.08),
+    transparent 45%
+  );
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+.z-card:hover {
+  border-color: rgba(59, 140, 255, 0.32);
+}
+.z-card:hover::before {
+  opacity: 1;
+}
+.z-card--lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+.z-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.z-card__sigil {
+  font-size: 20px;
+  color: var(--volt);
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--z-line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: transform 0.4s var(--ease-out), border-color 0.3s, box-shadow 0.3s;
+}
+.z-card:hover .z-card__sigil {
+  transform: rotate(-8deg) scale(1.08);
+  border-color: var(--volt);
+  box-shadow: 0 0 22px rgba(59, 140, 255, 0.25);
+}
+.z-card__status {
+  font-family: var(--z-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--volt);
+  text-transform: uppercase;
+}
+.z-card__index {
+  font-family: var(--z-font-mono);
+  font-size: 11px;
+  color: var(--volt);
+  letter-spacing: 0.2em;
+}
+.z-card__name {
+  font-family: var(--z-font-ui);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.z-card__role {
+  font-family: var(--z-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--z-muted);
+  margin: 6px 0 14px;
+  text-transform: uppercase;
+}
+.z-card__desc {
+  font-size: 14px;
+  color: var(--z-muted);
+  line-height: 1.65;
+}
+.z-card__meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--z-line);
+  font-family: var(--z-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: #4a5266;
+  text-transform: uppercase;
+}
+.z-card__line {
+  margin-top: 18px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border-radius: 1px;
+}
+.z-card__line span {
+  display: block;
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, var(--volt), var(--cyan));
+  transform: translateX(-110%);
+  transition: transform 1s var(--ease-out);
+}
+.z-card--lift:hover .z-card__line span {
+  transform: translateX(240%);
+  transition-duration: 1.4s;
+}
+
+/* ============================================================
+   CODEBLOCK / CONNECT
+   ============================================================ */
+.z-codeblock {
+  border: 1px solid var(--z-line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--z-bg-2);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.z-codeblock__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--z-line);
+  font-family: var(--z-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--z-muted);
+  background: rgba(255, 255, 255, 0.025);
+}
+.z-codeblock pre {
+  padding: 22px;
+  font-family: var(--z-font-mono);
+  font-size: 12.5px;
+  line-height: 1.8;
+  overflow-x: auto;
+  color: var(--z-text);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.z-footer {
+  border-top: 1px solid var(--z-line);
+  background: var(--z-bg-2);
+}
+.z-footer__top {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 44px clamp(20px, 5vw, 64px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.z-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--z-font-ui);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.22em;
+}
+.z-footer__bottom {
+  border-top: 1px solid var(--z-line);
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 18px clamp(20px, 5vw, 64px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--z-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #4a5266;
+}
+
+/* ============================================================
+   REVEAL (used by Reveal client component)
+   ============================================================ */
+.z-reveal {
+  opacity: 0;
+  transform: translateY(34px);
+  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+}
+.z-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .z-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

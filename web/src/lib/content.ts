@@ -36,10 +36,12 @@ export interface NavLink {
 }
 
 export const NAV_LINKS: NavLink[] = [
+  { href: '/playground', label: 'Playground', highlight: true },
   { href: '/#mcp', label: 'MCP' },
   { href: '/#cli', label: 'CLI' },
   { href: '/#roadmap', label: 'Roadmap' },
-  { href: '/b20', label: 'B20', highlight: true },
+  { href: '/b20', label: 'B20' },
+  { href: '/token', label: 'Token', highlight: true },
 ];
 
 export const MANTRA = ['Observe', 'Decide', 'Execute', 'Remember'];

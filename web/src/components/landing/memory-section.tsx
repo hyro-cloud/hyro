@@ -8,6 +8,7 @@ export function MemorySection() {
   return (
     <SectionShell
       id="memory"
+      index="04"
       label="memory"
       title="Persistent agent memory"
       description="Facts, goals, preferences, conversations and state — stored in PostgreSQL with pgvector semantic recall, scoped per agent."

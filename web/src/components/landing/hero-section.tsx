@@ -2,137 +2,81 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, Copy, Github, Rocket, Terminal } from 'lucide-react';
-import { CliWindow } from '@/components/landing/cli-window';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { XIcon } from '@/components/ui/x-icon';
-import { MANTRA, SITE } from '@/lib/content';
-import { IntegrationsStrip } from '@/components/landing/integrations-strip';
+import { HeroCanvas } from '@/components/fx/hero-canvas';
+import { SITE } from '@/lib/content';
 
 export function HeroSection() {
-  return (
-    <section className="relative overflow-hidden pt-24 sm:pt-28">
-      <div className="shell px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Badge variant="live" className="mb-6">
-              <span className="h-1.5 w-1.5 animate-pulseDot rounded-full bg-hyro-blue" />
-              Agent OS · v{SITE.version}
-            </Badge>
+  const heroRef = React.useRef<HTMLElement>(null);
 
-            <h1 className="max-w-xl font-mono text-3xl font-semibold leading-[1.15] tracking-tight text-hyro-ink sm:text-4xl lg:text-[2.65rem]">
-              <span className="text-hyro-blue term-glow">{SITE.name}</span>
-              <br />
-              <span className="text-hyro-mute">{SITE.tagline}</span>
-            </h1>
-
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-hyro-mute sm:text-lg">
-              {SITE.description}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {MANTRA.map((word, i) => (
-                <span
-                  key={word}
-                  className="rounded-md border border-hyro-line/80 bg-white/[0.03] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-hyro-dim"
-                >
-                  <span className="text-hyro-faint">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="mx-2 text-hyro-faint">/</span>
-                  <span className="text-hyro-blue">{word}</span>
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-6 max-w-sm">
-              <IntegrationsStrip />
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center gap-2.5">
-              <Button size="lg" asChild>
-                <Link href="/app">
-                  <Rocket className="h-4 w-4" />
-                  Launch App
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <a href="#cli">
-                  <Terminal className="h-4 w-4" />
-                  Install CLI
-                </a>
-              </Button>
-              <Button variant="ghost" size="icon" className="h-11 w-11" asChild>
-                <a href={SITE.x} target="_blank" rel="noopener noreferrer" aria-label="X @HyroCloud">
-                  <XIcon className="h-4 w-4" />
-                </a>
-              </Button>
-              <Button variant="ghost" size="icon" className="h-11 w-11" asChild>
-                <a href={SITE.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                  <Github className="h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </motion.div>
-
-          <CliWindow className="w-full lg:justify-self-end" />
-        </div>
-
-        <motion.div
-          className="mx-auto mt-14 w-full sm:mt-16"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex w-full items-center gap-3 rounded-lg border border-hyro-line/80 bg-hyro-panel/50 px-4 py-3 font-mono text-xs sm:px-5 sm:text-sm">
-            <span className="shrink-0 text-hyro-faint">$</span>
-            <code className="min-w-0 flex-1 text-center text-hyro-blue sm:text-left">
-              {SITE.installFromGit}
-            </code>
-            <CopyButton text={SITE.installFromGit} />
-          </div>
-          <p className="mt-2 text-center font-mono text-[10px] text-hyro-dim">
-            Repo:{' '}
-            <a href={SITE.github} className="text-hyro-blue hover:underline" target="_blank" rel="noopener noreferrer">
-              github.com/hyro-cloud/hyro
-            </a>
-          </p>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = React.useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard may be blocked */
+  // Spark discharge on click anywhere in the hero (ZAPP signature).
+  const onPointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('a, button, input')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span');
+      s.className = 'spark';
+      s.style.left = `${e.clientX}px`;
+      s.style.top = `${e.clientY}px`;
+      document.body.appendChild(s);
+      const ang = (Math.PI * 2 * i) / n + Math.random() * 0.6;
+      const dist = 50 + Math.random() * 90;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist;
+      s.animate(
+        [
+          { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${Math.random() * 1.6 + 0.3})`, opacity: 0 },
+        ],
+        { duration: 600 + Math.random() * 400, easing: 'cubic-bezier(0.16,1,0.3,1)' },
+      ).onfinish = () => s.remove();
     }
+    window.dispatchEvent(
+      new CustomEvent('hyro:discharge', { detail: { nx: (e.clientX / window.innerWidth) * 2 - 1 } }),
+    );
   };
 
   return (
-    <button
-      type="button"
-      onClick={copy}
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-hyro-line/80 text-hyro-dim transition hover:border-hyro-blue hover:text-hyro-blue"
-      aria-label="Copy install command"
-    >
-      {copied ? (
-        <span className="text-[10px] text-hyro-green">OK</span>
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
-    </button>
+    <section ref={heroRef} id="home" className="z-hero" onPointerDown={onPointerDown}>
+      <HeroCanvas />
+      <div className="z-hero__grid" aria-hidden />
+
+      <div className="z-hero__content">
+        <p className="z-hero__eyebrow">
+          <span className="dot dot--live" /> System online&nbsp;//&nbsp;v{SITE.version}&nbsp;//&nbsp;Agent OS
+        </p>
+
+        <h1 className="z-hero__title" aria-label={SITE.name}>
+          {'HYRO'.split('').map((ch, i) => (
+            <span key={`${ch}-${i}`} className="z-hero__char">
+              {ch}
+            </span>
+          ))}
+        </h1>
+
+        <p className="z-hero__sub">
+          The Operating System for — <span className="zaccent">Autonomous Agents.</span>
+        </p>
+
+        <p className="z-hero__copy">{SITE.description}</p>
+
+        <div className="z-hero__actions">
+          <Link href="/app" className="z-btn z-btn--primary" data-magnetic>
+            <span>Launch App</span>
+            <span className="z-btn__icon">❯_</span>
+          </Link>
+          <a href="#cli" className="z-btn z-btn--ghost" data-magnetic>
+            <span>Install CLI</span>
+          </a>
+        </div>
+
+        <p className="z-hero__hint">⌁ click anywhere to discharge</p>
+      </div>
+
+      <div className="z-hero__scroll" aria-hidden>
+        <span>SCROLL</span>
+        <span className="z-hero__scroll-line" />
+      </div>
+    </section>
   );
 }

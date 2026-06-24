@@ -1,18 +1,24 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+import './zapp.css';
 import { SITE } from '@/lib/content';
 import { SITE_LINK_PREVIEW } from '@/lib/site-metadata';
+import { Preloader } from '@/components/fx/preloader';
+import { CustomCursor } from '@/components/fx/custom-cursor';
+import { Tilt } from '@/components/fx/tilt';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 
-const sans = IBM_Plex_Sans({
+const sans = Space_Grotesk({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
 });
 
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '700'],
   variable: '--font-mono',
   display: 'swap',
 });
@@ -64,17 +70,30 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#040810',
-  colorScheme: 'dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#040810' },
+  ],
+  colorScheme: 'light dark',
   width: 'device-width',
   initialScale: 1,
 };
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem('hyro.theme');if(t!=='dark'){document.documentElement.classList.add('light');document.documentElement.style.colorScheme='light';}else{document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}}catch(e){document.documentElement.classList.add('light');document.documentElement.style.colorScheme='light';}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${sans.variable} ${mono.variable} min-h-screen bg-hyro-bg font-sans text-hyro-ink antialiased`}>
-        {children}
+        <ThemeProvider>
+          <Preloader />
+          <CustomCursor />
+          <Tilt />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

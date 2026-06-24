@@ -12,7 +12,7 @@ const buttonVariants = cva(
           'bg-primary text-primary-foreground hover:-translate-y-px hover:bg-hyro-blue-hi hover:shadow-[0_10px_30px_-12px_rgba(59,140,255,0.55)]',
         outline:
           'border border-hyro-line bg-transparent text-hyro-ink hover:border-hyro-blue hover:text-hyro-blue',
-        ghost: 'text-hyro-mute hover:bg-white/5 hover:text-hyro-ink',
+        ghost: 'text-hyro-mute hover:bg-hyro-hover/10 hover:text-hyro-ink',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         link: 'text-hyro-blue underline-offset-4 hover:underline',
         social:

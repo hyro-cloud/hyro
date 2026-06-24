@@ -5,6 +5,7 @@
   "description": "HYRO Cloud — landing page (Next.js 15, TypeScript, Tailwind, Framer Motion, shadcn/ui).",
   "scripts": {
     "dev": "next dev",
+    "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -21,12 +22,15 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.160.0",
+    "viem": "^2.53.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "@types/three": "^0.160.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.1.4",

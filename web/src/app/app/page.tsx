@@ -17,17 +17,15 @@ export default function AppPage() {
   return (
     <>
       <SiteHeader />
-      <main className="pt-24 sm:pt-28">
-        <section className="shell px-4 pb-20 sm:px-6">
+      <main className="pt-28 sm:pt-36">
+        <section className="mx-auto max-w-[1240px] px-5 pb-24 sm:px-8">
           <LaunchStudioHero />
 
-          <div className="mb-12">
-            <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-14 mt-16">
+            <header className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="tag">
-                  <span className="n">{'//'}</span> dashboard
-                </p>
-                <h2 className="mt-2 font-mono text-lg font-semibold text-hyro-ink sm:text-xl">
+                <p className="z-section__eyebrow !mb-2">01 // dashboard</p>
+                <h2 className="font-sans text-2xl font-bold tracking-tight text-hyro-ink sm:text-3xl">
                   HYRO terminal preview
                 </h2>
               </div>
@@ -39,12 +37,10 @@ export default function AppPage() {
             <HyroDashboardTerminal />
           </div>
 
-          <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <header className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="tag">
-                <span className="n">{'//'}</span> console
-              </p>
-              <h2 className="mt-2 font-mono text-lg font-semibold text-hyro-ink sm:text-xl">
+              <p className="z-section__eyebrow !mb-2">02 // console</p>
+              <h2 className="font-sans text-2xl font-bold tracking-tight text-hyro-ink sm:text-3xl">
                 Web console
               </h2>
             </div>

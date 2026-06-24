@@ -10,6 +10,7 @@ export function McpSection() {
   return (
     <SectionShell
       id="mcp"
+      index="03"
       label="mcp"
       title="Native MCP — Base · B20 · GitHub · DexScreener"
       description="Install servers on your VPS brain, grant tools per agent, and execute from the hyro dashboard. Deny-by-default."

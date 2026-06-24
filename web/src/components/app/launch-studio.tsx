@@ -84,21 +84,21 @@ export function LaunchStudioHero() {
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-hyro-blue/30 bg-hyro-blue/[0.06] px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-hyro-blue">
+          <p className="z-section__eyebrow !mb-4 flex items-center gap-2">
             <Rocket className="h-3 w-3" />
             HYRO Agent Studio · B20 · Base MCP · x402
-          </div>
-          <h1 className="font-mono text-3xl font-semibold tracking-tight text-hyro-ink sm:text-4xl">
-            Launch the <span className="text-hyro-blue term-glow">HYRO agent</span>
+          </p>
+          <h1 className="hero-wordmark text-[clamp(2.6rem,7vw,4.75rem)]">
+            Launch the <span className="hero-char">HYRO agent</span>
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-relaxed text-hyro-mute">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-hyro-mute sm:text-lg">
             Real <span className="text-hyro-ink">hyro</span> dashboard on your machine — DexScreener,
             GitHub, Base MCP with B20 tools, x402 USDC, and Bankr-ready onchain flows. Memory syncs to
             your VPS brain.
           </p>
         </div>
 
-        <div className="rounded-xl border border-hyro-line/80 bg-gradient-to-br from-hyro-blue/[0.08] to-transparent p-4">
+        <div className="rounded-[10px] border border-hyro-line/20 bg-gradient-to-br from-hyro-blue/[0.08] to-transparent p-5">
           <p className="font-mono text-[10px] uppercase tracking-widest text-hyro-dim">Quick start</p>
           <code className="mt-2 block whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-hyro-blue">
             {`hyro login\nhyro\nconnect base\nconnect github\nchat`}
@@ -115,34 +115,40 @@ export function LaunchStudioHero() {
 
 export function LaunchStudioCards() {
   return (
-    <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {CARDS.map((c) => {
-        const Icon = c.icon;
-        const inner = (
-          <>
-            <Icon className="h-4 w-4 text-hyro-blue" />
-            <h3 className="mt-3 font-mono text-sm font-semibold text-hyro-ink">{c.title}</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-hyro-mute">{c.desc}</p>
-            <span className="mt-auto inline-block pt-4 font-mono text-[11px] text-hyro-blue">{c.cta}</span>
-          </>
-        );
-        const cls = cn(
-          'group flex h-full flex-col rounded-xl border border-hyro-line/80 bg-hyro-panel/30 p-5 transition',
-          'hover:border-hyro-blue/40 hover:bg-hyro-blue/[0.04]',
-        );
-        if ('external' in c && c.external) {
-          return (
-            <a key={c.title} href={c.href} target="_blank" rel="noopener noreferrer" className={cls}>
-              {inner}
-            </a>
+    <div className="mt-16">
+      <p className="z-section__eyebrow !mb-5">03 // explore</p>
+      <div className="z-grid">
+        {CARDS.map((c) => {
+          const Icon = c.icon;
+          const inner = (
+            <>
+              <div className="z-card__top">
+                <span className="z-card__sigil">
+                  <Icon className="h-5 w-5" />
+                </span>
+              </div>
+              <h3 className="z-card__name">{c.title}</h3>
+              <p className="z-card__desc mt-3 flex-1">{c.desc}</p>
+              <span className="mt-auto inline-block pt-5 font-mono text-[11px] tracking-wide text-hyro-blue">
+                {c.cta}
+              </span>
+            </>
           );
-        }
-        return (
-          <Link key={c.title} href={c.href} className={cls}>
-            {inner}
-          </Link>
-        );
-      })}
+          const cls = cn('z-card z-card--lift flex h-full flex-col');
+          if ('external' in c && c.external) {
+            return (
+              <a key={c.title} href={c.href} target="_blank" rel="noopener noreferrer" className={cls} data-tilt>
+                {inner}
+              </a>
+            );
+          }
+          return (
+            <Link key={c.title} href={c.href} className={cls} data-tilt>
+              {inner}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
