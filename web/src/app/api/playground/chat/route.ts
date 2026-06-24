@@ -9,9 +9,9 @@ interface ChatBody {
 
 function resolveMimoModel(modelId?: string): string {
   if (modelId?.startsWith('mimo')) {
-    return process.env.MIMO_API_MODEL?.trim() || 'mimo';
+    return process.env.MIMO_API_MODEL?.trim() || 'mimo-v2.5-pro';
   }
-  return process.env.MIMO_API_MODEL?.trim() || 'mimo';
+  return process.env.MIMO_API_MODEL?.trim() || 'mimo-v2.5-pro';
 }
 
 function isMimoModel(modelId?: string): boolean {
