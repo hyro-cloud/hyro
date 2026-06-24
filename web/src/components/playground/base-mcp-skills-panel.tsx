@@ -8,9 +8,12 @@ import {
   type SkillCategory,
 } from '@/lib/playground/base-mcp-skills';
 import { cn } from '@/lib/utils';
-import { BarChart3, Fuel, Lock, Rocket, Search, Zap } from 'lucide-react';
+import { BarChart3, Cloud, Coins, Fuel, Lock, Plug, Rocket, Search, Zap } from 'lucide-react';
 
 const CATEGORY_ICONS: Partial<Record<SkillCategory, React.ReactNode>> = {
+  quickstart: <Plug className="h-3 w-3" />,
+  x402: <Coins className="h-3 w-3" />,
+  bankr: <Cloud className="h-3 w-3" />,
   dex: <Search className="h-3 w-3" />,
   base: <Zap className="h-3 w-3" />,
   b20: <Rocket className="h-3 w-3" />,
@@ -36,11 +39,20 @@ export function BaseMcpSkillsPanel({ onInsertSkill, disabled }: BaseMcpSkillsPan
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-hyro-blue">
-            Base MCP — onchain actions
+            Onchain skills — Base MCP · x402 · Bankr
           </h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-hyro-dim">
-            Click a skill to fill the message box — edit if needed, then press Enter to send.{' '}
-            <span className="text-hyro-mute">Onchain tools run when you send a skill message.</span>
+            Click a skill to fill the message box — edit if needed, then press Enter. Local reads run
+            instantly; wallet/send/swap prompts need{' '}
+            <a
+              href="https://mcp.base.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-hyro-blue hover:underline"
+            >
+              mcp.base.org
+            </a>
+            .
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded border border-hyro-blue/40 bg-hyro-blue/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-wider text-hyro-blue">

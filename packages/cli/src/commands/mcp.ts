@@ -6,6 +6,7 @@ import { CliError, EXIT } from '../lib/errors';
 import { emit } from '../lib/render';
 import { print, success, table } from '../lib/output';
 import { theme } from '../theme';
+import { LOCAL_BASE_TOOLS, callLocalMcp, parseToolArgs } from '../mcp/local-tools';
 
 async function findInstalled(client: HyroClient, slug: string): Promise<McpServer> {
   const { servers } = await client.mcp.listInstalled();
@@ -31,8 +32,14 @@ export async function runMcpCommand(
   args: string[],
   opts: McpCommandOptions,
 ): Promise<void> {
-  const client = requireAuth();
   const json = Boolean(opts.json);
+
+  if (sub === 'call') {
+    await runMcpCall(args, json);
+    return;
+  }
+
+  const client = requireAuth();
 
   if (sub === 'search') {
     const q = args.join(' ').trim() || undefined;
@@ -132,6 +139,33 @@ export async function runMcpCommand(
         servers.map((s) => [theme.amber(s.slug), s.name, theme.dim(s.transport), String(s.tools.length)]),
       ),
     );
+    print('');
+  });
+}
+
+/** Run MCP tool locally on this machine — works without hyro login. */
+export async function runMcpCall(args: string[], json: boolean): Promise<void> {
+  const slug = args[0] as 'base' | 'dexscreener' | undefined;
+  const tool = args[1];
+  const argPairs = args.slice(2);
+
+  if (!slug || !tool) {
+    throw new CliError(
+      'Usage: hyro mcp call <base|dexscreener> <tool> [key=value ...]',
+      EXIT.usage,
+      `Base tools: ${LOCAL_BASE_TOOLS.join(', ')}`,
+    );
+  }
+
+  const parsed = parseToolArgs(argPairs);
+  const result = await callLocalMcp(slug, tool, parsed);
+
+  emit(json, { slug, tool, args: parsed, result }, () => {
+    print('');
+    print(result);
+    print('');
+    print(theme.dim(`  local · RPC ${process.env.BASE_RPC_URL || 'https://mainnet.base.org'}`));
+    print(theme.dim('  VPS agent: hyro login → hyro connect base → hyro run "…"'));
     print('');
   });
 }

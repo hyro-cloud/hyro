@@ -64,10 +64,6 @@ function resolveChain(): Chain {
   return base;
 }
 
-function client() {
-  return createPublicClient({ chain: resolveChain(), transport: http(rpcUrl()) });
-}
-
 const B20_LAUNCH_GUIDE = `B20 token launch on Base (summary from ${B20_DOCS}):
 
 1. Install Base Foundry: base-foundryup (use base-forge / base-cast, not standard forge).
@@ -79,6 +75,26 @@ const B20_LAUNCH_GUIDE = `B20 token launch on Base (summary from ${B20_DOCS}):
 7. B20 tokens are full ERC-20 — use get_token_balance for balances.
 
 HYRO agent can read balances now; onchain deploy requires base-forge on a machine with a funded wallet.`;
+
+const USDC_BY_CHAIN: Record<number, Address> = {
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  84532: '0x036CbD53842c5426634e7929541c8C8aF941b5',
+};
+
+const BASE_MCP_QUICKSTART = `Connect official Base MCP: https://mcp.base.org
+Docs: https://docs.base.org/agents/quickstart
+Skill: npx skills add base/skills --skill base-mcp -a cursor`;
+
+const BANKR_X402_GUIDE = `Bankr x402 Cloud: https://bankr.bot/x402
+  bankr x402 init → edit handler → bankr x402 deploy → bankr x402 call`;
+
+const X402_FLOW_GUIDE = `x402 HTTP 402 USDC payments on Base. See https://docs.cdp.coinbase.com/x402/core-concepts/how-it-works`;
+
+const X402_MCP_GUIDE = `Monetize MCP tools with @x402/mcp createPaymentWrapper — npm @x402/mcp`;
+
+function client() {
+  return createPublicClient({ chain: resolveChain(), transport: http(rpcUrl()) });
+}
 
 const server = new Server(
   { name: 'hyro-mcp-base', version: '0.1.0' },
@@ -118,6 +134,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: 'b20_launch_guide',
       description:
         'Step-by-step guide to launch a B20 token on Base via the B20 Factory precompile.',
+      inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'get_usdc_balance',
+      description: 'USDC balance on Base for an address (Circle USDC).',
+      inputSchema: {
+        type: 'object',
+        properties: { address: { type: 'string', description: '0x address' } },
+        required: ['address'],
+      },
+    },
+    {
+      name: 'base_mcp_quickstart',
+      description: 'How to connect official Base MCP (mcp.base.org) and base-mcp skill.',
+      inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'bankr_x402_guide',
+      description: 'Bankr x402 Cloud — deploy paid USDC-gated HTTP endpoints on Base.',
+      inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'x402_flow_guide',
+      description: 'x402 payment flow overview for HYRO agents on Base.',
+      inputSchema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'x402_mcp_guide',
+      description: 'Monetize MCP tools with @x402/mcp payment wrapper.',
       inputSchema: { type: 'object', properties: {} },
     },
     {
@@ -193,6 +238,35 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       return { content: [{ type: 'text', text: B20_LAUNCH_GUIDE }] };
     }
 
+    if (name === 'get_usdc_balance') {
+      const holder = a.address as Address;
+      const chain = resolveChain();
+      const usdc = USDC_BY_CHAIN[chain.id];
+      if (!usdc) {
+        return { content: [{ type: 'text', text: `USDC not configured for chain ${chain.id}` }], isError: true };
+      }
+      const raw = await client().readContract({
+        address: usdc,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [holder],
+      });
+      return { content: [{ type: 'text', text: `${formatUnits(raw, 6)} USDC` }] };
+    }
+
+    if (name === 'base_mcp_quickstart') {
+      return { content: [{ type: 'text', text: BASE_MCP_QUICKSTART }] };
+    }
+    if (name === 'bankr_x402_guide') {
+      return { content: [{ type: 'text', text: BANKR_X402_GUIDE }] };
+    }
+    if (name === 'x402_flow_guide') {
+      return { content: [{ type: 'text', text: X402_FLOW_GUIDE }] };
+    }
+    if (name === 'x402_mcp_guide') {
+      return { content: [{ type: 'text', text: X402_MCP_GUIDE }] };
+    }
+
     if (name === 'send_transaction') {
       const pk = process.env.WALLET_PRIVATE_KEY?.trim();
       if (!pk) {
@@ -212,6 +286,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         chain: resolveChain(),
         transport: http(rpcUrl()),
       });
+      if (!a.to || !a.value) {
+        return { content: [{ type: 'text', text: 'to and value are required' }], isError: true };
+      }
       const hash = await wallet.sendTransaction({
         to: a.to as Address,
         value: parseEther(a.value),

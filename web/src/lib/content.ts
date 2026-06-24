@@ -20,7 +20,12 @@ export const SITE = {
     'git clone https://github.com/hyro-cloud/hyro.git && cd hyro && npm install && npm run build && npm install -g ./packages/cli',
   version: '0.1.0',
   // Base / x402 references
-  x402Docs: 'https://docs.cdp.coinbase.com/x402/core-concepts/builder-codes',
+  baseMcpUrl: 'https://mcp.base.org',
+  baseMcpQuickstart: 'https://docs.base.org/agents/quickstart',
+  baseMcpSkill: 'https://docs.base.org/agents/skills/SKILL.md',
+  x402Docs: 'https://docs.cdp.coinbase.com/x402/core-concepts/how-it-works',
+  bankrX402: 'https://bankr.bot/x402',
+  bankrX402Docs: 'https://docs.bankr.bot/x402-cloud/quick-start',
   baseAnnouncement: 'https://x.com/buildonbase/status/2067693904909189141',
   baseDevBlog: 'https://blog.base.dev/builder-codes-and-erc-8021-fixing-onchain-attribution',
   baseBuilderDocs: 'https://docs.base.org/base-chain/quickstart/builder-codes',
@@ -37,7 +42,8 @@ export interface NavLink {
 
 export const NAV_LINKS: NavLink[] = [
   { href: '/playground', label: 'Playground', highlight: true },
-  { href: '/#mcp', label: 'MCP' },
+  { href: '/mcp', label: 'MCP' },
+  { href: '/x402', label: 'x402' },
   { href: '/#cli', label: 'CLI' },
   { href: '/#roadmap', label: 'Roadmap' },
   { href: '/b20', label: 'B20' },
@@ -74,23 +80,23 @@ export const INTEGRATIONS = [
   {
     id: 'base-mcp',
     label: 'Base MCP',
-    tag: 'get_balance · B20 · launch guide',
-    href: '/base',
+    tag: 'mcp.base.org · wallets · swap',
+    href: '/mcp',
     internal: true,
   },
   {
     id: 'x402',
     label: 'x402',
-    tag: 'USDC pay-per-call on Base',
-    href: '/b20',
+    tag: 'USDC pay-per-call · Bankr Cloud',
+    href: '/x402',
     internal: true,
   },
   {
     id: 'bankr',
     label: 'Bankr',
-    tag: 'Onchain agent payments',
-    href: SITE.bankr,
-    internal: false,
+    tag: 'x402 Cloud · agent payments',
+    href: '/x402',
+    internal: true,
   },
 ] as const;
 

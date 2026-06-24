@@ -19,7 +19,7 @@ import {
   resolveConnectedSources,
   autoConnectFreeSources,
 } from '../lib/sourceConnect';
-import { printVpsSetup, VPS_MCP_SETUP } from '../lib/mcpSetup';
+import { printVpsSetup, VPS_MCP_SETUP, printIntegrationGuide } from '../lib/mcpSetup';
 import {
   addFact,
   addGoal,
@@ -57,8 +57,6 @@ function providerLabel(model: string): string {
       return 'Google Gemini';
     case 'openrouter':
       return 'OpenRouter';
-    case 'mimo':
-      return 'Xiaomi MiMo';
     default:
       return /mimo/i.test(model) ? 'Xiaomi MiMo' : 'Cloud runtime';
   }
@@ -205,8 +203,9 @@ function renderHelp(): void {
     ['progress <n> <n%>', 'set goal #n progress'],
     ['governance [supervised|autonomous|readonly]', 'view / set governance (local)'],
     ['sources', 'list data sources'],
-    ['connect <key> / disconnect <key>', 'toggle a data source (installs MCP on VPS)'],
-    ['setup github | setup base', 'VPS env instructions for GitHub / Base B20'],
+    ['connect <key> / disconnect <key>', 'toggle MCP on VPS · guides: connect x402 | bankr | base-mcp'],
+    ['setup github | setup base | setup x402', 'VPS / integration setup instructions'],
+    ['mcp call base <tool> …', 'local chain read (no login) — e.g. get_usdc_balance address=0x…'],
     ['model <id>', 'switch the active model'],
     ['status / clear', 're-render the dashboard'],
     ['help / exit', 'this help / quit'],
@@ -313,7 +312,7 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
   if (lower === 'chat') return 'chat';
   if (lower === 'memory' || lower === 'mem') return void (await renderMemory());
   if (head === 'setup' && parts[1] && parts[1] in VPS_MCP_SETUP) {
-    print(printVpsSetup(parts[1]!));
+    printIntegrationGuide(parts[1]!);
     return;
   }
   if (lower === 'setup') return void (await renderSetup());
@@ -377,16 +376,32 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
 
   if (head === 'connect' || head === 'disconnect') {
     const key = parts[1]?.toLowerCase();
-    if (!key || !DATA_SOURCES.some((s) => s.key === key))
-      return void printError(`Unknown source. Try: ${DATA_SOURCES.map((s) => s.key).join(', ')}`);
+    const guideKeys = new Set(['x402', 'bankr', 'base-mcp']);
+    if (!key) {
+      return void printError(`Usage: connect <key>. Sources: ${DATA_SOURCES.map((s) => s.key).join(', ')}, x402, bankr, base-mcp`);
+    }
+    if (head === 'connect' && guideKeys.has(key)) {
+      printIntegrationGuide(key);
+      return;
+    }
+    if (!DATA_SOURCES.some((s) => s.key === key)) {
+      return void printError(`Unknown source. Try: ${DATA_SOURCES.map((s) => s.key).join(', ')}, x402, bankr, base-mcp`);
+    }
     if (head === 'connect') {
       await connectMcpSource(key);
       success(`${key} connected (MCP installed on VPS).`);
+      print(theme.dim('  Local reads: hyro mcp call base get_chain_info'));
     } else {
       await disconnectMcpSource(key);
       success(`${key} disconnected.`);
     }
     await rerender();
+    return;
+  }
+
+  if (head === 'mcp' && parts[1] === 'call') {
+    const { runMcpCall } = await import('../commands/mcp.js');
+    await runMcpCall(parts.slice(2), false);
     return;
   }
 

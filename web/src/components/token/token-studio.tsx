@@ -15,6 +15,7 @@ import {
 import { parseUnits, type Address, type Hex } from 'viem';
 import { Button } from '@/components/ui/button';
 import { useB20Wallet } from '@/hooks/use-b20-wallet';
+import { WalletMenu } from '@/components/token/wallet-menu';
 import {
   EXPLORER,
   FAUCET_URL,
@@ -67,7 +68,18 @@ function shortAddr(a: string) {
 }
 
 export function TokenStudio() {
-  const { account, connect, connecting, error: walletError, provider, short } = useB20Wallet();
+  const {
+    account,
+    balance,
+    balanceLoading,
+    connect,
+    connecting,
+    disconnect,
+    error: walletError,
+    provider,
+    refreshBalance,
+    short,
+  } = useB20Wallet();
   const [studioMode, setStudioMode] = useState<StudioMode>('deploy');
   const [tab, setTab] = useState<Tab>('create');
   const [activation, setActivation] = useState<ActivationStatus | null>(null);
@@ -396,14 +408,16 @@ export function TokenStudio() {
                 Faucet
               </a>
             </Button>
-            <Button size="sm" onClick={() => void connect()} disabled={connecting}>
-              {connecting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Wallet className="h-3.5 w-3.5" />
-              )}
-              {short ?? 'Connect Wallet'}
-            </Button>
+            <WalletMenu
+              account={account}
+              short={short}
+              balance={balance}
+              balanceLoading={balanceLoading}
+              connecting={connecting}
+              onConnect={() => void connect()}
+              onDisconnect={() => void disconnect()}
+              onRefreshBalance={() => void refreshBalance()}
+            />
           </div>
         </div>
 

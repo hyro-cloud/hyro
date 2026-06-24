@@ -4,12 +4,25 @@ import { registerChatCommand, registerRunCommand } from '../commands/chat';
 import { registerMemoryCommand } from '../commands/memory-cmd';
 import { registerDeployCommand } from '../commands/deploy';
 import { registerMcpCommand } from '../commands/mcp-cmd';
+import { registerConnectCommand } from '../commands/connect-cmd';
 import { renderBanner } from '../theme';
 import { print } from '../lib/output';
 import { CLI_VERSION } from '../version';
 import { setColorEnabled } from '../theme';
 
-const KNOWN_COMMANDS = new Set(['login', 'chat', 'run', 'memory', 'deploy', 'mcp', 'dashboard', 'home', 'ui']);
+const KNOWN_COMMANDS = new Set([
+  'login',
+  'chat',
+  'run',
+  'memory',
+  'deploy',
+  'mcp',
+  'connect',
+  'disconnect',
+  'dashboard',
+  'home',
+  'ui',
+]);
 
 export function createProgram(): Command {
   const program = new Command('hyro')
@@ -28,6 +41,7 @@ export function createProgram(): Command {
   registerMemoryCommand(program);
   registerDeployCommand(program);
   registerMcpCommand(program);
+  registerConnectCommand(program);
 
   program
     .command('dashboard')
@@ -48,8 +62,11 @@ export function createProgram(): Command {
       '  run        One-shot autonomous task\n' +
       '  memory     Agent memory (search, export, import)\n' +
       '  deploy     Deploy agent to cloud\n' +
-      '  mcp        MCP registry & grants\n' +
+      '  mcp        MCP registry, grants, and local tool calls\n' +
+      '  connect    Connect sources on VPS (base, github, …) or show x402/Bankr guides\n' +
       '  dashboard  Open the HYRO dashboard (TUI home)\n' +
+      '\nLocal chain reads (no login): hyro mcp call base get_usdc_balance address=0x...\n' +
+      'Full agent + MCP on VPS: hyro login → hyro connect base → hyro run "..."\n' +
       '\nRun `hyro` with no arguments to open the dashboard. Type `chat` inside to talk to your agent.\n' +
       'Goals and facts added in the dashboard sync to VPS memory when logged in.\n'
     );

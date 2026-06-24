@@ -34,12 +34,23 @@ export function parseSkillInvocation(text: string): { skill: BaseMcpSkill; clean
 }
 
 async function tryRunSkill(skill: BaseMcpSkill, userText: string): Promise<string | null> {
+  if (skill.chatOnly || !skill.tools[0]) {
+    return [
+      `**${skill.title}** · \`${skill.toolLabel}\``,
+      '',
+      '_This prompt uses **official Base MCP** (mcp.base.org). Connect Base MCP in Cursor or HYRO CLI, then send this message._',
+      '',
+      `> ${skill.chatInsert}`,
+      '',
+      `Install: ${SITE.baseMcpQuickstart ?? 'https://docs.base.org/agents/quickstart'}`,
+    ].join('\n');
+  }
+
   const tool = skill.tools[0];
-  if (!tool) return null;
   const args = { ...skill.defaultArgs };
 
   const addrs = userText.match(/0x[a-fA-F0-9]{40}/g) ?? [];
-  if (tool === 'get_balance' && addrs[0]) args.address = addrs[0];
+  if ((tool === 'get_balance' || tool === 'get_usdc_balance') && addrs[0]) args.address = addrs[0];
   if (tool === 'get_token_balance') {
     if (addrs[0]) args.token = addrs[0];
     if (addrs[1]) args.address = addrs[1];
@@ -128,7 +139,7 @@ export function seedWelcomeMessage(modelId: string): ChatMessage {
   return {
     id: crypto.randomUUID(),
     role: 'system',
-    content: `HYRO gateway ready · ${modelLabel(modelId)} · click a Base MCP skill to fill the message box, then send.`,
+    content: `HYRO gateway ready · ${modelLabel(modelId)} · Base MCP · x402 · Bankr skills in panel below — click to fill, then send.`,
     model: modelId,
     ts: Date.now(),
   };

@@ -13,5 +13,6 @@ export * from './schemas';
 export * from './types';
 
 export * from './prompts/hyro';
+export * from './integrations/onchain';
 
 export const VERSION = '0.1.0';

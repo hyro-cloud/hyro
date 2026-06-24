@@ -1,47 +1,18 @@
 /**
- * Server-side MCP tool execution for playground (Base RPC + DexScreener HTTP).
- * Mirrors packages/mcp-base without viem dependency in the web bundle.
+ * Local MCP tool execution on the user's machine — no VPS required.
+ * Same read tools as web Playground + HYRO @hyro/mcp-base on VPS.
  */
-
 import {
   BANKR_X402_GUIDE,
   BASE_MCP_QUICKSTART_GUIDE,
+  B20_LAUNCH_GUIDE,
   USDC_BY_CHAIN,
   X402_FLOW_GUIDE,
-} from '@/lib/integrations/onchain';
-
-const X402_MCP_GUIDE = `x402 + MCP — monetize HYRO tools (@x402/mcp)
-
-Server (wrap paid tools):
-  import { createPaymentWrapper } from "@x402/mcp";
-  const paidHandler = createPaymentWrapper(myToolHandler, {
-    scheme: "exact",
-    network: "eip155:8453",
-    price: "$0.01",
-    payTo: "0xYourWallet",
-  });
-
-Client (auto-pay on 402):
-  import { createX402MCPClient } from "@x402/mcp";
-  const client = createX402MCPClient({ name: "hyro", version: "1.0.0", autoPayment: true, ... });
-
-HYRO VPS: extend packages/mcp-base with createPaymentWrapper per tool.
-Bankr x402 Cloud: hosted alternative — bankr x402 deploy (no MCP imports in handler).
-
-npm: https://www.npmjs.com/package/@x402/mcp`;
-
-const B20_LAUNCH_GUIDE = `B20 token launch on Base (summary):
-
-1. Install Base Foundry: base-foundryup (use base-forge / base-cast).
-2. Network: Base Sepolia https://sepolia.base.org (84532) or mainnet https://mainnet.base.org (8453).
-3. Call B20 Factory precompile createB20 via B20FactoryLib.
-4. Factory addresses start with 0xB20f…; minted tokens start with 0xB200….
-5. B20 tokens are full ERC-20 — use get_token_balance for balances.
-
-Docs: https://docs.base.org/get-started/launch-b20-token`;
+  X402_MCP_GUIDE,
+} from '@hyro/core';
 
 function rpcUrl(): string {
-  return process.env.BASE_RPC_URL?.trim() || 'https://mainnet.base.org';
+  return process.env.BASE_RPC_URL?.trim() || process.env.HYRO_BASE_RPC_URL?.trim() || 'https://mainnet.base.org';
 }
 
 function chainMeta(): { chainId: number; name: string } {
@@ -86,7 +57,17 @@ function decodeString(hex: string): string {
   return out;
 }
 
-export async function executeBaseTool(
+export function parseToolArgs(pairs: string[]): Record<string, string> {
+  const args: Record<string, string> = {};
+  for (const p of pairs) {
+    const eq = p.indexOf('=');
+    if (eq === -1) continue;
+    args[p.slice(0, eq).trim()] = p.slice(eq + 1).trim();
+  }
+  return args;
+}
+
+export async function executeLocalBaseTool(
   tool: string,
   args: Record<string, string>,
 ): Promise<string> {
@@ -99,6 +80,7 @@ export async function executeBaseTool(
         name: chain.name,
         rpcUrl: rpcUrl(),
         walletConfigured: Boolean(process.env.WALLET_PRIVATE_KEY?.trim()),
+        mode: 'local-cli',
         b20Docs: 'https://docs.base.org/get-started/launch-b20-token',
       },
       null,
@@ -109,53 +91,19 @@ export async function executeBaseTool(
   if (tool === 'get_balance') {
     const address = args.address?.trim();
     if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      throw new Error('Valid address (0x…) required');
+      throw new Error('Valid address=0x… required');
     }
     const bal = await rpc<string>('eth_getBalance', [address, 'latest']);
     return `${weiToEth(bal)} ETH (${chain.name})`;
   }
 
-  if (tool === 'get_token_balance') {
-    const token = args.token?.trim();
-    const holder = args.address?.trim();
-    if (!token || !holder) throw new Error('token and address required');
-    const balHex = await rpc<string>('eth_call', [
-      { to: token, data: `0x70a08231${padAddress(holder)}` },
-      'latest',
-    ]);
-    const decHex = await rpc<string>('eth_call', [
-      { to: token, data: '0x313ce567' },
-      'latest',
-    ]);
-    const symHex = await rpc<string>('eth_call', [
-      { to: token, data: '0x95d89b41' },
-      'latest',
-    ]);
-    const raw = BigInt(balHex);
-    const decimals = Number(BigInt(decHex));
-    const symbol = decodeString(symHex) || 'TOKEN';
-    const divisor = 10n ** BigInt(decimals);
-    const whole = raw / divisor;
-    const frac = raw % divisor;
-    const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '');
-    const amount = fracStr ? `${whole}.${fracStr}` : whole.toString();
-    return `${amount} ${symbol}`;
-  }
-
-  if (tool === 'b20_launch_guide') return B20_LAUNCH_GUIDE;
-
-  if (tool === 'base_mcp_quickstart') return BASE_MCP_QUICKSTART_GUIDE;
-  if (tool === 'bankr_x402_guide') return BANKR_X402_GUIDE;
-  if (tool === 'x402_flow_guide') return X402_FLOW_GUIDE;
-  if (tool === 'x402_mcp_guide') return X402_MCP_GUIDE;
-
   if (tool === 'get_usdc_balance') {
     const address = args.address?.trim();
     if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      throw new Error('Valid address (0x…) required');
+      throw new Error('Valid address=0x… required');
     }
     const usdc = USDC_BY_CHAIN[chain.chainId];
-    if (!usdc) throw new Error(`USDC address unknown for chain ${chain.chainId}`);
+    if (!usdc) throw new Error(`USDC not configured for chain ${chain.chainId}`);
     const balHex = await rpc<string>('eth_call', [
       { to: usdc, data: `0x70a08231${padAddress(address)}` },
       'latest',
@@ -168,17 +116,48 @@ export async function executeBaseTool(
     return `${amount} USDC (${chain.name})`;
   }
 
+  if (tool === 'get_token_balance') {
+    const token = args.token?.trim();
+    const holder = args.address?.trim();
+    if (!token || !holder) throw new Error('token= and address= required');
+    const balHex = await rpc<string>('eth_call', [
+      { to: token, data: `0x70a08231${padAddress(holder)}` },
+      'latest',
+    ]);
+    const decHex = await rpc<string>('eth_call', [{ to: token, data: '0x313ce567' }, 'latest']);
+    const symHex = await rpc<string>('eth_call', [{ to: token, data: '0x95d89b41' }, 'latest']);
+    const raw = BigInt(balHex);
+    const decimals = Number(BigInt(decHex));
+    const symbol = decodeString(symHex) || 'TOKEN';
+    const divisor = 10n ** BigInt(decimals);
+    const whole = raw / divisor;
+    const frac = raw % divisor;
+    const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '');
+    const amount = fracStr ? `${whole}.${fracStr}` : whole.toString();
+    return `${amount} ${symbol}`;
+  }
+
+  if (tool === 'b20_launch_guide') return B20_LAUNCH_GUIDE;
+  if (tool === 'base_mcp_quickstart') return BASE_MCP_QUICKSTART_GUIDE;
+  if (tool === 'bankr_x402_guide') return BANKR_X402_GUIDE;
+  if (tool === 'x402_flow_guide') return X402_FLOW_GUIDE;
+  if (tool === 'x402_mcp_guide') return X402_MCP_GUIDE;
+
   if (tool === 'send_transaction') {
     if (!process.env.WALLET_PRIVATE_KEY?.trim()) {
-      return 'WALLET_PRIVATE_KEY is not set on the playground host. Configure it in web .env.local (or VPS) to send txs. Agent only prepares — you sign every tx.';
+      return [
+        'send_transaction needs WALLET_PRIVATE_KEY on this host.',
+        'For agent sends: hyro login → hyro connect base → set key on VPS .env.prod → hyro run "…"',
+        'For wallet writes (send USDC): use official Base MCP in Cursor (mcp.base.org).',
+      ].join('\n');
     }
-    return 'send_transaction requires viem on VPS MCP host. Use `hyro` CLI with `connect base` for live sends.';
+    return 'Local send requires @hyro/mcp-base on VPS. Use hyro connect base + hyro run when logged in.';
   }
 
   throw new Error(`Unknown base tool: ${tool}`);
 }
 
-export async function executeDexscreenerTool(
+export async function executeLocalDexscreenerTool(
   tool: string,
   args: Record<string, string>,
 ): Promise<string> {
@@ -186,7 +165,6 @@ export async function executeDexscreenerTool(
     const query = args.query?.trim() || 'BRETT base';
     const res = await fetch(
       `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`,
-      { next: { revalidate: 30 } },
     );
     if (!res.ok) throw new Error(`DexScreener ${res.status}`);
     const data = (await res.json()) as {
@@ -194,42 +172,58 @@ export async function executeDexscreenerTool(
         chainId?: string;
         dexId?: string;
         pairAddress?: string;
-        baseToken?: { symbol?: string; name?: string; address?: string };
+        baseToken?: { symbol?: string };
         quoteToken?: { symbol?: string };
         priceUsd?: string;
         liquidity?: { usd?: number };
-        volume?: { h24?: number };
-        priceChange?: { h24?: number };
       }[];
     };
     const pairs = (data.pairs ?? [])
       .filter((p) => p.chainId === 'base' || p.chainId === 'basesepolia')
       .slice(0, 8);
-    if (!pairs.length) return `No Base pairs found for "${query}".`;
+    if (!pairs.length) return `No Base pairs for "${query}".`;
     return pairs
       .map((p) => {
         const sym = p.baseToken?.symbol ?? '?';
-        const price = p.priceUsd ?? '—';
         const liq = p.liquidity?.usd ? `$${Math.round(p.liquidity.usd).toLocaleString()}` : '—';
-        const vol = p.volume?.h24 ? `$${Math.round(p.volume.h24).toLocaleString()}` : '—';
-        const ch = p.priceChange?.h24 != null ? `${p.priceChange.h24.toFixed(2)}%` : '—';
-        return `${sym}/${p.quoteToken?.symbol ?? '?'} · ${p.dexId} · $${price} · liq ${liq} · 24h vol ${vol} · 24h ${ch}\n  ${p.pairAddress} (${p.chainId})`;
+        return `${sym}/${p.quoteToken?.symbol ?? '?'} · ${p.dexId} · $${p.priceUsd ?? '—'} · liq ${liq}\n  ${p.pairAddress}`;
       })
       .join('\n\n');
   }
 
   if (tool === 'get_pair') {
     const pairId = args.pairId?.trim();
-    if (pairId && pairId.includes('/')) {
+    if (pairId?.includes('/')) {
       const [chainId, pairAddress] = pairId.split('/');
-      const res = await fetch(
-        `https://api.dexscreener.com/latest/dex/pairs/${chainId}/${pairAddress}`,
-      );
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chainId}/${pairAddress}`);
       const data = (await res.json()) as { pairs?: unknown[] };
       return JSON.stringify(data.pairs?.[0] ?? data, null, 2);
     }
-    return executeDexscreenerTool('search_pairs', { query: pairId || 'BRETT base' });
+    return executeLocalDexscreenerTool('search_pairs', { query: pairId || 'BRETT base' });
   }
 
   throw new Error(`Unknown dexscreener tool: ${tool}`);
+}
+
+export const LOCAL_BASE_TOOLS = [
+  'get_chain_info',
+  'get_balance',
+  'get_usdc_balance',
+  'get_token_balance',
+  'b20_launch_guide',
+  'base_mcp_quickstart',
+  'bankr_x402_guide',
+  'x402_flow_guide',
+  'x402_mcp_guide',
+  'send_transaction',
+] as const;
+
+export async function callLocalMcp(
+  slug: 'base' | 'dexscreener',
+  tool: string,
+  args: Record<string, string>,
+): Promise<string> {
+  if (slug === 'base') return executeLocalBaseTool(tool, args);
+  if (slug === 'dexscreener') return executeLocalDexscreenerTool(tool, args);
+  throw new Error(`Local call not supported for slug "${slug}". Use: base, dexscreener`);
 }

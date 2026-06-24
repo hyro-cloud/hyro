@@ -61,6 +61,18 @@ export function registerMcpCommand(program: Command): void {
     });
 
   mcp
+    .command('call <slug> <tool> [args...]')
+    .description('Call an MCP tool locally (base/dexscreener — no login required)')
+    .action(async (slug: string, tool: string, args: string[], _opts, cmd) => {
+      try {
+        const globalOpts = cmd.optsWithGlobals();
+        await runMcpCommand('call', [slug, tool, ...args], { json: globalOpts.json });
+      } catch (err) {
+        handleCliError(err);
+      }
+    });
+
+  mcp
     .command('remove <slug>')
     .alias('rm')
     .description('Uninstall an MCP server')

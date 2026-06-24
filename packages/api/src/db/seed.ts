@@ -84,6 +84,31 @@ const MCP_SERVERS: McpSeed[] = [
         inputSchema: { type: 'object', properties: {} },
       },
       {
+        name: 'get_usdc_balance',
+        description: 'USDC balance on Base for an address.',
+        inputSchema: { type: 'object', properties: { address: { type: 'string' } }, required: ['address'] },
+      },
+      {
+        name: 'base_mcp_quickstart',
+        description: 'Connect official Base MCP (mcp.base.org) + base-mcp skill.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'bankr_x402_guide',
+        description: 'Bankr x402 Cloud deploy and paid API calls.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'x402_flow_guide',
+        description: 'x402 HTTP 402 USDC payment flow on Base.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'x402_mcp_guide',
+        description: '@x402/mcp payment wrapper for monetized MCP tools.',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
         name: 'send_transaction',
         description: 'Send native ETH (needs WALLET_PRIVATE_KEY).',
         inputSchema: {
@@ -92,6 +117,24 @@ const MCP_SERVERS: McpSeed[] = [
           required: ['to', 'value'],
         },
         dangerous: true,
+      },
+    ],
+  },
+  {
+    slug: 'base-official',
+    name: 'Base MCP (official)',
+    description:
+      'Official Base Account MCP — wallets, send, swap, x402, Morpho, Uniswap, Bankr plugins. OAuth via mcp.base.org.',
+    transport: 'http',
+    install: { url: 'https://mcp.base.org' },
+    env: [],
+    permissions: { network: true },
+    verified: true,
+    tools: [
+      {
+        name: 'wallet_tools',
+        description: 'Dynamic tool catalog — list tools after OAuth connect.',
+        inputSchema: { type: 'object', properties: {} },
       },
     ],
   },
