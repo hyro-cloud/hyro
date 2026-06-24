@@ -5,7 +5,8 @@ const nextConfig = {
   outputFileTracingRoot: import.meta.dirname,
   // Self-contained server build for Docker/VPS hosting (ignored by Vercel).
   output: 'standalone',
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
+    config.plugins.push(new webpack.IgnorePlugin({ resourceRegExp: /^ws$/ }));
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
