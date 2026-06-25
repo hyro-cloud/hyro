@@ -16,6 +16,7 @@ import { authRoutes } from './routes/auth';
 import { healthRoutes } from './routes/health';
 import { marketplaceRoutes } from './routes/marketplace';
 import { mcpRoutes } from './routes/mcp';
+import { mcpOAuthRoutes } from './routes/mcp-oauth';
 import { memoryRoutes } from './routes/memory';
 import { modelRoutes } from './routes/models';
 import { runRoutes } from './routes/runs';
@@ -75,6 +76,7 @@ export async function buildApp(config: Config, logger?: Logger): Promise<Fastify
   runRoutes(app);
   memoryRoutes(app);
   mcpRoutes(app);
+  mcpOAuthRoutes(app);
   marketplaceRoutes(app);
   modelRoutes(app);
   usageRoutes(app);

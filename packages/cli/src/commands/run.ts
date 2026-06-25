@@ -26,6 +26,23 @@ async function shouldRunOffline(opts: RunOptions): Promise<boolean> {
   return !(await isApiReachable());
 }
 
+/** API stores run output as `{ text }`, not a plain string. */
+function extractRunFinalText(
+  run: { output: Record<string, unknown> | null; error?: string | null },
+  streamedFinalText = '',
+): string {
+  const output = run.output;
+  if (output && typeof output === 'object' && 'text' in output) {
+    const text = String((output as { text?: unknown }).text ?? '').trim();
+    if (text) return text;
+  }
+  const fromStream = streamedFinalText.trim();
+  if (fromStream) return fromStream;
+  const err = run.error?.trim();
+  if (err) return err;
+  return '';
+}
+
 function runFooter(
   usage: { tokensIn: number; tokensOut: number; costUsd: number; steps: number },
   status: string,
@@ -89,7 +106,7 @@ async function executeOnline(client: HyroClient, task: string, opts: RunOptions)
     const { run } = await client.runs.create({
       agentId: agent.id,
       input: { task },
-      ...(opts.model ? { model: opts.model } : {}),
+      ...(opts.model || loadConfig().model ? { model: opts.model || loadConfig().model } : {}),
       ...(opts.maxSteps ? { maxSteps: opts.maxSteps } : {}),
       stream: false,
     });
@@ -112,17 +129,21 @@ async function executeOnline(client: HyroClient, task: string, opts: RunOptions)
   const { run } = await client.runs.create({
     agentId: agent.id,
     input: { task },
-    ...(opts.model ? { model: opts.model } : {}),
+    ...(opts.model || loadConfig().model ? { model: opts.model || loadConfig().model } : {}),
     ...(opts.maxSteps ? { maxSteps: opts.maxSteps } : {}),
     stream: true,
   });
 
   let finalRun = run;
   let stepCount = 0;
+  let streamedFinalText = '';
   for await (const evt of client.runs.stream(run.id)) {
     if (evt.type === 'step' && evt.step) {
       stepCount++;
       const step = { type: evt.step.type, content: evt.step.content as Record<string, unknown> };
+      if (evt.step.type === 'final' && step.content.text != null) {
+        streamedFinalText = String(step.content.text);
+      }
       opts.onStep?.(step);
       if (!opts.onStep) renderStep(step);
     } else if (evt.type === 'done' && evt.run) {
@@ -139,8 +160,7 @@ async function executeOnline(client: HyroClient, task: string, opts: RunOptions)
     );
   }
 
-  const finalStep = finalRun.output;
-  return { finalText: typeof finalStep === 'string' ? finalStep : '', steps: stepCount };
+  return { finalText: extractRunFinalText(finalRun, streamedFinalText), steps: stepCount };
 }
 
 /** Execute a task against cloud API or offline runtime. */

@@ -202,7 +202,15 @@ const MODELS: ModelInfo[] = [
     supportsVision: false,
     supportsStreaming: true,
     pricing: { inputPer1M: 0, outputPer1M: 0 },
-    aliases: ['mimo', 'xiaomi-mimo', 'xiaomi'],
+    aliases: [
+      'mimo',
+      'xiaomi-mimo',
+      'xiaomi',
+      // MiMo API model ids — often mistaken for HYRO DEFAULT_MODEL; map to mimo-chat.
+      'mimo-v2.5-pro',
+      'mimo-v2.5',
+      'mimo-pro',
+    ],
     description: 'Xiaomi MiMo via OpenAI-compatible API (token-plan endpoint).',
   },
 

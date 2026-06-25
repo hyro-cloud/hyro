@@ -57,6 +57,8 @@ export async function POST(req: Request) {
       model,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
       temperature: 0.7,
+      max_completion_tokens: 4096,
+      thinking: { type: 'disabled' },
       stream: true,
     }),
   });

@@ -72,6 +72,9 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       BASE_RPC_URL: ${BASE_RPC_URL:-https://mainnet.base.org}
       WALLET_PRIVATE_KEY: ${WALLET_PRIVATE_KEY:-}
+      BASE_MCP_URL: ${BASE_MCP_URL:-https://mcp.base.org}
+      MCP_OAUTH_SUCCESS_URL: ${MCP_OAUTH_SUCCESS_URL:-https://hyrocloud.lol/mcp}
+      BASE_MCP_CLIENT_ID: ${BASE_MCP_CLIENT_ID:-}
     command: ["sh", "-c", "node packages/api/dist/db/migrate.js && node packages/api/dist/db/seed.js && node packages/api/dist/server.js"]
 
   caddy:

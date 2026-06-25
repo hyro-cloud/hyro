@@ -210,6 +210,24 @@ export interface AgentMcpGrant {
   grantedAt: string;
 }
 
+/** Stored encrypted in `user_mcp_installs.env` for OAuth MCP servers. */
+export interface McpOAuthTokenSet {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  tokenType?: string;
+  scope?: string;
+}
+
+export interface McpOAuthConnectionStatus {
+  slug: string;
+  connected: boolean;
+  expiresAt: string | null;
+  connectedAt: string | null;
+  toolCount: number;
+  authorizeUrl?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Marketplace
 // ---------------------------------------------------------------------------

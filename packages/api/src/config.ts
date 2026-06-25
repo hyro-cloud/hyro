@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import { DEFAULTS, PROVIDERS, type ProviderId } from '@hyro/core';
+import { DEFAULTS, PROVIDERS, resolveModelId, type ProviderId } from '@hyro/core';
 
 // Load the nearest .env (workspace root or package cwd) without overriding real env.
 for (const candidate of ['.env', '../../.env', '../../../.env']) {
@@ -48,7 +48,7 @@ const envSchema = z.object({
   MIMO_API_KEY: z.string().optional(),
   XIAOMI_BASE_URL: z.string().url().default('https://token-plan-sgp.xiaomimimo.com/v1'),
   /** Model id sent to the MiMo API (may differ from HYRO registry id `mimo-chat`). */
-  MIMO_API_MODEL: z.string().default('mimo'),
+  MIMO_API_MODEL: z.string().default('mimo-v2.5-pro'),
 
   DEFAULT_MODEL: z.string().default(DEFAULTS.model),
   EMBEDDING_MODEL: z.string().default(DEFAULTS.embeddingModel),
@@ -60,6 +60,12 @@ const envSchema = z.object({
 
   MCP_REGISTRY_URL: z.string().default('https://registry.hyro.cloud'),
   MCP_SANDBOX: bool(true),
+  /** Official Base MCP server URL (OAuth + tools). */
+  BASE_MCP_URL: z.string().url().default('https://mcp.base.org'),
+  /** Pre-registered OAuth client id (optional — auto-registers via DCR if unset). */
+  BASE_MCP_CLIENT_ID: z.string().optional(),
+  /** Where to send the browser after OAuth success. */
+  MCP_OAUTH_SUCCESS_URL: z.string().url().default('https://hyrocloud.lol/mcp'),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -91,6 +97,10 @@ export interface Config {
   freeTierMonthlyTokens: number;
   mcpRegistryUrl: string;
   mcpSandbox: boolean;
+  baseMcpUrl: string;
+  baseMcpClientId: string | null;
+  mcpOAuthSuccessUrl: string;
+  mcpTokenSealSecret: string;
 }
 
 let cached: Config | null = null;
@@ -104,12 +114,31 @@ export function loadConfig(): Config {
   }
   const e = parsed.data;
 
+  let defaultModel = e.DEFAULT_MODEL;
+  const resolvedDefault = resolveModelId(defaultModel);
+  if (resolvedDefault) {
+    defaultModel = resolvedDefault;
+  } else if (/^mimo(-|$)/i.test(defaultModel) && defaultModel !== 'mimo-chat') {
+    // Common misconfiguration: MiMo API model id placed in DEFAULT_MODEL.
+    console.warn(
+      `[hyro] DEFAULT_MODEL=${defaultModel} is not a HYRO model id — using mimo-chat. ` +
+        `Set MIMO_API_MODEL=${defaultModel} in .env.prod instead.`,
+    );
+    defaultModel = 'mimo-chat';
+  }
+
   const providerKeys: Partial<Record<ProviderId, string>> = {};
   if (e.ANTHROPIC_API_KEY) providerKeys.anthropic = e.ANTHROPIC_API_KEY;
   if (e.OPENAI_API_KEY) providerKeys.openai = e.OPENAI_API_KEY;
   if (e.GEMINI_API_KEY) providerKeys.gemini = e.GEMINI_API_KEY;
   if (e.OPENROUTER_API_KEY) providerKeys.openrouter = e.OPENROUTER_API_KEY;
   if (e.MIMO_API_KEY) providerKeys.mimo = e.MIMO_API_KEY;
+
+  let mimoApiModel = e.MIMO_API_MODEL.trim();
+  if (!mimoApiModel || mimoApiModel === 'mimo') {
+    console.warn('[hyro] MIMO_API_MODEL is legacy "mimo" — using mimo-v2.5-pro.');
+    mimoApiModel = 'mimo-v2.5-pro';
+  }
 
   cached = {
     env: e.NODE_ENV,
@@ -130,8 +159,8 @@ export function loadConfig(): Config {
     rateLimitWindow: e.RATE_LIMIT_WINDOW,
     providerKeys,
     mimoBaseUrl: e.XIAOMI_BASE_URL,
-    mimoApiModel: e.MIMO_API_MODEL,
-    defaultModel: e.DEFAULT_MODEL,
+    mimoApiModel,
+    defaultModel: defaultModel,
     embeddingModel: e.EMBEDDING_MODEL,
     embeddingDim: e.EMBEDDING_DIM,
     billingEnabled: e.BILLING_ENABLED,
@@ -139,6 +168,10 @@ export function loadConfig(): Config {
     freeTierMonthlyTokens: e.FREE_TIER_MONTHLY_TOKENS,
     mcpRegistryUrl: e.MCP_REGISTRY_URL,
     mcpSandbox: e.MCP_SANDBOX,
+    baseMcpUrl: e.BASE_MCP_URL,
+    baseMcpClientId: e.BASE_MCP_CLIENT_ID ?? null,
+    mcpOAuthSuccessUrl: e.MCP_OAUTH_SUCCESS_URL,
+    mcpTokenSealSecret: e.API_KEY_PEPPER,
   };
 
   if (cached.isProd && cached.jwtSecret.startsWith('dev-insecure')) {

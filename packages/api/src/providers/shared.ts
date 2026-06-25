@@ -70,10 +70,27 @@ export async function fetchJson(
     json = { raw: text };
   }
   if (!res.ok) {
-    throw new ProviderError(`Provider returned ${res.status}`, {
-      status: res.status,
-      body: json,
-    });
+    const detail = formatProviderErrorBody(json);
+    const message = detail
+      ? `Provider returned ${res.status}: ${detail}`
+      : `Provider returned ${res.status}`;
+    throw new ProviderError(message, { status: res.status, body: json });
   }
   return json;
+}
+
+function formatProviderErrorBody(json: unknown): string | undefined {
+  if (!json || typeof json !== 'object') return undefined;
+  const obj = json as Record<string, unknown>;
+  const err = obj.error;
+  if (err && typeof err === 'object') {
+    const e = err as Record<string, unknown>;
+    const msg = typeof e.message === 'string' ? e.message : undefined;
+    const param = typeof e.param === 'string' ? e.param : undefined;
+    if (msg && param) return `${msg} (${param})`;
+    if (msg) return msg;
+  }
+  if (typeof obj.message === 'string') return obj.message;
+  if (typeof obj.raw === 'string' && obj.raw.trim()) return obj.raw.trim().slice(0, 240);
+  return undefined;
 }

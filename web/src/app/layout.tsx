@@ -4,7 +4,6 @@ import './globals.css';
 import './zapp.css';
 import { SITE } from '@/lib/content';
 import { SITE_LINK_PREVIEW } from '@/lib/site-metadata';
-import { Preloader } from '@/components/fx/preloader';
 import { CustomCursor } from '@/components/fx/custom-cursor';
 import { Tilt } from '@/components/fx/tilt';
 import { ThemeProvider } from '@/components/theme/theme-provider';
@@ -89,7 +88,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${sans.variable} ${mono.variable} min-h-screen bg-hyro-bg font-sans text-hyro-ink antialiased`}>
         <ThemeProvider>
-          <Preloader />
           <CustomCursor />
           <Tilt />
           {children}

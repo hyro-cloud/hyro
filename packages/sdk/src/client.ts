@@ -13,6 +13,7 @@ import type {
   MemorySearchResult,
   MemoryUpsertInput,
   McpGrantInput,
+  McpOAuthConnectionStatus,
   McpServer,
   McpToolSchema,
   AgentMcpGrant,
@@ -220,6 +221,15 @@ class McpResource extends Resource {
   }
   grants(agentId: string): Promise<{ grants: AgentMcpGrant[] }> {
     return this.http.request('/v1/mcp/grants', { query: { agentId } });
+  }
+  oauthStart(slug: string): Promise<{ authorizeUrl: string; state: string }> {
+    return this.http.request(`/v1/mcp/oauth/${slug}/start`, { method: 'POST' });
+  }
+  oauthStatus(slug: string): Promise<McpOAuthConnectionStatus> {
+    return this.http.request(`/v1/mcp/oauth/${slug}/status`);
+  }
+  oauthDisconnect(slug: string): Promise<{ ok: boolean }> {
+    return this.http.request(`/v1/mcp/oauth/${slug}`, { method: 'DELETE' });
   }
 }
 

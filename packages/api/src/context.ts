@@ -17,12 +17,14 @@ import { McpService } from './services/mcp.service';
 import { MarketplaceService } from './services/marketplace.service';
 import { UsageService } from './services/usage.service';
 import { RunService } from './services/run.service';
+import { McpOAuthService } from './services/mcp-oauth.service';
 
 export interface Services {
   auth: AuthService;
   agents: AgentService;
   memory: MemoryService;
   mcp: McpService;
+  mcpOAuth: McpOAuthService;
   marketplace: MarketplaceService;
   usage: UsageService;
   runs: RunService;
@@ -52,6 +54,7 @@ export function buildContext(config: Config, log: Logger): AppContext {
     agents: new AgentService(ctx),
     memory: new MemoryService(ctx),
     mcp: new McpService(ctx),
+    mcpOAuth: new McpOAuthService(ctx),
     marketplace: new MarketplaceService(ctx),
     usage: new UsageService(ctx),
     runs: new RunService(ctx),

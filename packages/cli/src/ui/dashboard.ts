@@ -203,7 +203,7 @@ function renderHelp(): void {
     ['progress <n> <n%>', 'set goal #n progress'],
     ['governance [supervised|autonomous|readonly]', 'view / set governance (local)'],
     ['sources', 'list data sources'],
-    ['connect <key> / disconnect <key>', 'toggle MCP on VPS · guides: connect x402 | bankr | base-mcp'],
+    ['connect <key> / disconnect <key>', 'toggle MCP on VPS · guides: connect x402 | bankr | base-official'],
     ['setup github | setup base | setup x402', 'VPS / integration setup instructions'],
     ['mcp call base <tool> …', 'local chain read (no login) — e.g. get_usdc_balance address=0x…'],
     ['model <id>', 'switch the active model'],
@@ -254,7 +254,13 @@ export async function runDashboard(): Promise<void> {
     print(theme.dim("  entered chat — type 'back' to return"));
     rl.pause();
     await runChatSession({
+      rl,
       onLeave: () => print(theme.dim('  ← back to dashboard')),
+    });
+    rl.removeAllListeners('line');
+    rl.on('line', (line) => {
+      queue.push(line);
+      void drain();
     });
     rl.resume();
     if (!exited) setPrompt();
@@ -376,9 +382,15 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
 
   if (head === 'connect' || head === 'disconnect') {
     const key = parts[1]?.toLowerCase();
-    const guideKeys = new Set(['x402', 'bankr', 'base-mcp']);
+    const guideKeys = new Set(['x402', 'bankr', 'base-mcp', 'base-official']);
     if (!key) {
-      return void printError(`Usage: connect <key>. Sources: ${DATA_SOURCES.map((s) => s.key).join(', ')}, x402, bankr, base-mcp`);
+      return void printError(`Usage: connect <key>. Sources: ${DATA_SOURCES.map((s) => s.key).join(', ')}, x402, bankr, base-official`);
+    }
+    if (head === 'connect' && key === 'base-official') {
+      const { connectBaseOfficialMcp } = await import('../commands/connect.js');
+      await connectBaseOfficialMcp();
+      await rerender();
+      return;
     }
     if (head === 'connect' && guideKeys.has(key)) {
       printIntegrationGuide(key);
@@ -388,14 +400,15 @@ async function handleCommand(input: string, rerender: () => Promise<void>): Prom
       return void printError(`Unknown source. Try: ${DATA_SOURCES.map((s) => s.key).join(', ')}, x402, bankr, base-mcp`);
     }
     if (head === 'connect') {
-      await connectMcpSource(key);
-      success(`${key} connected (MCP installed on VPS).`);
-      print(theme.dim('  Local reads: hyro mcp call base get_chain_info'));
+      await connectMcpSource(key, { quiet: true });
+      await rerender();
+      success(`${key} connected — MCP installed + granted on VPS.`);
+      print(theme.dim('  Next: chat  or  run "check Base chain info"'));
     } else {
       await disconnectMcpSource(key);
+      await rerender();
       success(`${key} disconnected.`);
     }
-    await rerender();
     return;
   }
 

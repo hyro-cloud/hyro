@@ -1,6 +1,7 @@
 import {
   HYRO_AGENT_META,
   HYRO_AGENT_SYSTEM_PROMPT,
+  resolveModelId,
   type Agent,
 } from '@hyro/core';
 import { ApiError, type HyroClient } from '@hyro/sdk';
@@ -18,7 +19,8 @@ export async function ensureHyroAgent(client: HyroClient): Promise<Agent> {
 
   try {
     const { agent } = await client.agents.get(slug);
-    saveConfig({ activeAgent: agent.slug, model: agent.model });
+    const model = resolveModelId(agent.model) ?? agent.model;
+    saveConfig({ activeAgent: agent.slug, model });
     return agent;
   } catch (err) {
     if (!(err instanceof ApiError) || err.statusCode !== 404) throw err;

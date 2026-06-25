@@ -118,7 +118,8 @@ export class McpService {
     const row = await this.db.queryOne<ServerRow>('SELECT * FROM mcp_servers WHERE id = $1', [serverId]);
     if (!row) throw new NotFoundError('MCP server');
     const server = mapServer(row);
-    return this.ctx.mcpRuntime.listTools(server);
+    const token = await this.oauthToken(userId, server);
+    return this.ctx.mcpRuntime.listTools(server, { accessToken: token ?? undefined });
   }
 
   async grant(userId: string, input: McpGrantInput): Promise<AgentMcpGrant> {
@@ -164,7 +165,7 @@ export class McpService {
   }
 
   /** Resolve every MCP tool an agent is permitted to call, with routing metadata. */
-  async getGrantedToolsForAgent(agentId: string): Promise<ResolvedMcpTool[]> {
+  async getGrantedToolsForAgent(userId: string, agentId: string): Promise<ResolvedMcpTool[]> {
     const rows = await this.db.query<ServerRow & { allowed_tools: string[] }>(
       `SELECT s.*, g.allowed_tools FROM agent_mcp_grants g
        JOIN mcp_servers s ON s.id = g.mcp_server_id WHERE g.agent_id = $1`,
@@ -175,12 +176,41 @@ export class McpService {
       const server = mapServer(row);
       const allowed = asArray<string>(row.allowed_tools);
       const all = allowed.includes('*');
-      for (const tool of server.tools) {
+
+      let tools = server.tools;
+      if (this.ctx.services.mcpOAuth.isOAuthSlug(server.slug)) {
+        const token = await this.oauthToken(userId, server);
+        if (!token) continue;
+        const cached = await this.ctx.services.mcpOAuth.getDiscoveredTools(userId, server.id);
+        if (cached?.length) {
+          tools = cached;
+        } else {
+          tools = await this.ctx.mcpRuntime.listTools(server, { accessToken: token });
+        }
+      }
+
+      for (const tool of tools) {
         if (all || allowed.includes(tool.name)) {
           resolved.push({ server, tool, exposedName: `${server.slug}__${tool.name}` });
         }
       }
     }
     return resolved;
+  }
+
+  /** Call an MCP tool with OAuth when required. */
+  async callToolForUser(
+    userId: string,
+    server: McpServer,
+    toolName: string,
+    args: Record<string, unknown>,
+  ): Promise<string> {
+    const token = await this.oauthToken(userId, server);
+    return this.ctx.mcpRuntime.callTool(server, toolName, args, { accessToken: token ?? undefined });
+  }
+
+  private async oauthToken(userId: string, server: McpServer): Promise<string | null> {
+    if (!this.ctx.services.mcpOAuth.isOAuthSlug(server.slug)) return null;
+    return this.ctx.services.mcpOAuth.getAccessToken(userId, server.id, server.slug);
   }
 }

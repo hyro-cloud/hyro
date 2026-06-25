@@ -52,7 +52,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
 
   // Assemble tool definitions: built‑ins + granted MCP tools.
   const toolDefs: ToolDefinition[] = builtinToolDefinitions(agent.config.tools);
-  const mcpTools = await ctx.services.mcp.getGrantedToolsForAgent(agent.id);
+  const mcpTools = await ctx.services.mcp.getGrantedToolsForAgent(userId, agent.id);
   const mcpRoute = new Map<string, (typeof mcpTools)[number]>();
   for (const t of mcpTools) {
     toolDefs.push({ name: t.exposedName, description: t.tool.description ?? t.tool.name, inputSchema: t.tool.inputSchema });
@@ -93,7 +93,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
     const route = mcpRoute.get(call.name);
     if (route) {
       try {
-        return await ctx.mcpRuntime.callTool(route.server, route.tool.name, call.arguments);
+        return await ctx.services.mcp.callToolForUser(userId, route.server, route.tool.name, call.arguments);
       } catch (err) {
         return `MCP tool '${call.name}' failed: ${(err as Error).message}`;
       }

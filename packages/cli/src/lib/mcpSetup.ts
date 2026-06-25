@@ -33,11 +33,12 @@ export const VPS_MCP_SETUP: Record<string, { env: string[]; steps: string[] }> =
   'base-official': {
     env: [],
     steps: [
-      '1. Official Base MCP requires OAuth (Base Account) — best in Cursor IDE',
-      `2. Add to ~/.cursor/mcp.json: "base-mcp": { "url": "${BASE_MCP_URL}" }`,
-      '3. npx skills add base/skills --skill base-mcp -a cursor',
-      '4. VPS registry: hyro mcp install base-official (HTTP — OAuth not wired on shared VPS yet)',
-      '5. Use Cursor for: Show my wallets · Send USDC · Morpho yield',
+      '1. PC: hyro login',
+      '2. PC: hyro connect base-official  (opens Base Account OAuth in browser)',
+      '3. PC: hyro mcp grant base-official',
+      '4. PC: hyro run "show my wallets"  or  hyro chat',
+      '5. Writes return an approvalUrl — open in Base Account to confirm send/swap',
+      '6. Cursor fallback: ~/.cursor/mcp.json → "base-mcp": { "url": "https://mcp.base.org" }',
     ],
   },
   x402: {

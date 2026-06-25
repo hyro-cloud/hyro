@@ -1,6 +1,8 @@
 import { Command } from 'commander';
 import { runMcpCommand } from './mcp';
 import { handleCliError } from '../cli/handle-error';
+import { CliError, EXIT } from '../lib/errors';
+import { print } from '../lib/output';
 
 export function registerMcpCommand(program: Command): void {
   const mcp = program.command('mcp').description('Search, install and manage MCP servers');
@@ -37,6 +39,24 @@ export function registerMcpCommand(program: Command): void {
       try {
         const globalOpts = cmd.optsWithGlobals();
         await runMcpCommand('tools', [slug], { json: globalOpts.json });
+      } catch (err) {
+        handleCliError(err);
+      }
+    });
+
+  mcp
+    .command('connect [slug]')
+    .description('OAuth-connect an MCP server (base-official → mcp.base.org)')
+    .action(async (slug: string | undefined, _opts, cmd) => {
+      try {
+        const globalOpts = cmd.optsWithGlobals();
+        const target = slug ?? 'base-official';
+        if (target !== 'base-official') {
+          throw new CliError('OAuth connect supports: base-official', EXIT.usage);
+        }
+        const { connectBaseOfficialMcp } = await import('./connect.js');
+        await connectBaseOfficialMcp();
+        if (globalOpts.json) print(JSON.stringify({ connected: target }));
       } catch (err) {
         handleCliError(err);
       }

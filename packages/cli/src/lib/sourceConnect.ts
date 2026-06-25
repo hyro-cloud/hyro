@@ -77,7 +77,7 @@ async function ensureGranted(client: HyroClient, slug: string, agentRef?: string
 }
 
 /** Install + grant an MCP-backed source for the active agent. */
-export async function connectMcpSource(key: string): Promise<void> {
+export async function connectMcpSource(key: string, opts?: { quiet?: boolean }): Promise<void> {
   const source = DATA_SOURCES.find((s) => s.key === key);
   if (!source) throw new Error(`Unknown source: ${key}`);
   if (source.local) return;
@@ -89,7 +89,7 @@ export async function connectMcpSource(key: string): Promise<void> {
   if (!slug) throw new Error(`${source.label} is not available yet.`);
 
   const client = requireAuth();
-  if (key in VPS_MCP_SETUP) print(printVpsSetup(key));
+  if (!opts?.quiet && key in VPS_MCP_SETUP) print(printVpsSetup(key));
   await ensureInstalled(client, slug);
   await ensureGranted(client, slug);
   toggleSource(key, true);

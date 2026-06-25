@@ -21,6 +21,10 @@ interface JsonRpcResponse {
   error?: { code: number; message: string };
 }
 
+export interface McpRuntimeContext {
+  accessToken?: string;
+}
+
 export class McpRuntime {
   constructor(
     private readonly config: Config,
@@ -28,10 +32,10 @@ export class McpRuntime {
   ) {}
 
   /** List tools exposed by a server (declared manifest tools, optionally live). */
-  async listTools(server: McpServer): Promise<McpToolSchema[]> {
-    if (server.tools.length) return server.tools;
+  async listTools(server: McpServer, ctx: McpRuntimeContext = {}): Promise<McpToolSchema[]> {
+    if (server.tools.length && !ctx.accessToken) return server.tools;
     try {
-      const conn = await this.connect(server);
+      const conn = await this.connect(server, ctx);
       try {
         const result = (await conn.request('tools/list', {})) as { tools?: McpToolSchema[] };
         return result.tools ?? [];
@@ -40,13 +44,18 @@ export class McpRuntime {
       }
     } catch (err) {
       this.log.warn({ err, slug: server.slug }, 'Live MCP tool discovery failed');
-      return [];
+      return server.tools.length ? server.tools : [];
     }
   }
 
   /** Call a tool on a server and return its textual result. */
-  async callTool(server: McpServer, toolName: string, args: Record<string, unknown>): Promise<string> {
-    const conn = await this.connect(server);
+  async callTool(
+    server: McpServer,
+    toolName: string,
+    args: Record<string, unknown>,
+    ctx: McpRuntimeContext = {},
+  ): Promise<string> {
+    const conn = await this.connect(server, ctx);
     try {
       const result = (await conn.request('tools/call', { name: toolName, arguments: args })) as {
         content?: { type: string; text?: string }[];
@@ -56,16 +65,18 @@ export class McpRuntime {
         .map((c) => (c.type === 'text' ? c.text ?? '' : `[${c.type}]`))
         .join('\n');
       if (result.isError) return `Tool error: ${text}`;
-      return text || 'Tool returned no content.';
+      return formatMcpToolResult(text);
     } finally {
       await conn.close();
     }
   }
 
-  private async connect(server: McpServer): Promise<McpConnection> {
+  private async connect(server: McpServer, ctx: McpRuntimeContext = {}): Promise<McpConnection> {
     if (server.transport === 'http' || server.transport === 'sse') {
       if (!server.install.url) throw new McpError(`Server ${server.slug} has no URL`);
-      return new HttpConnection(server.install.url);
+      const conn = new HttpConnection(server.install.url, ctx.accessToken);
+      await conn.initialize();
+      return conn;
     }
     if (!server.install.command) throw new McpError(`Server ${server.slug} has no command`);
     const env = this.buildEnv(server);
@@ -91,15 +102,33 @@ interface McpConnection {
 
 class HttpConnection implements McpConnection {
   private nextId = 1;
-  constructor(private readonly url: string) {}
+  private initialized = false;
+
+  constructor(
+    private readonly url: string,
+    private readonly accessToken?: string,
+  ) {}
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    await this.request('initialize', {
+      protocolVersion: PROTOCOL_VERSION,
+      capabilities: { tools: {} },
+      clientInfo: { name: 'hyro', version: '0.1.0' },
+    });
+    this.initialized = true;
+  }
 
   async request(method: string, params: Record<string, unknown>): Promise<unknown> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), CALL_TIMEOUT_MS);
     try {
+      const headers: Record<string, string> = { 'content-type': 'application/json' };
+      if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
+
       const res = await fetch(this.url, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers,
         body: JSON.stringify({ jsonrpc: '2.0', id: this.nextId++, method, params }),
         signal: controller.signal,
       });
@@ -117,6 +146,26 @@ class HttpConnection implements McpConnection {
   async close(): Promise<void> {
     /* stateless */
   }
+}
+
+/** Surface Base MCP approval links clearly to the agent loop. */
+function formatMcpToolResult(text: string): string {
+  if (!text.trim()) return 'Tool returned no content.';
+  try {
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    if (parsed.approvalUrl && parsed.requestId) {
+      return [
+        'Action requires Base Account approval.',
+        `Open: ${String(parsed.approvalUrl)}`,
+        `Request ID: ${String(parsed.requestId)}`,
+        'After approving, call get_request_status with this requestId.',
+        text,
+      ].join('\n');
+    }
+  } catch {
+    /* plain text */
+  }
+  return text;
 }
 
 class StdioConnection implements McpConnection {

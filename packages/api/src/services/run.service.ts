@@ -90,7 +90,8 @@ export class RunService {
   async create(userId: string, input: RunInput): Promise<Run> {
     const agent = await this.ctx.services.agents.getOwned(userId, input.agentId);
     await this.ctx.services.usage.assertWithinQuota(userId);
-    const model = input.model ? resolveModelId(input.model) ?? input.model : agent.model;
+    const rawModel = input.model ?? agent.model;
+    const model = resolveModelId(rawModel) ?? rawModel;
 
     const row = await this.db.queryOne<RunRow>(
       `INSERT INTO runs (id, agent_id, user_id, status, model, input, usage)
