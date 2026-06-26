@@ -33,6 +33,10 @@ export function saveToken(token: SavedB20Token): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all.slice(0, 50)));
 }
 
-export function tokensForDeployer(deployer: Address): SavedB20Token[] {
-  return loadSavedTokens().filter((t) => t.deployer.toLowerCase() === deployer.toLowerCase());
+export function tokensForDeployer(deployer: Address, chainId?: number): SavedB20Token[] {
+  return loadSavedTokens().filter(
+    (t) =>
+      t.deployer.toLowerCase() === deployer.toLowerCase() &&
+      (chainId === undefined || t.chainId === chainId),
+  );
 }

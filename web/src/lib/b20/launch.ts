@@ -1,5 +1,5 @@
 /**
- * B20 token launch — Base Sepolia first.
+ * B20 token launch — Base Sepolia + Base Mainnet.
  *
  * B20 is a native Base precompile (not an EVM contract). All tokens are created
  * through a singleton B20 Factory precompile at 0xB20f…0000 via
@@ -25,7 +25,10 @@ import {
   type Address,
   type Hex,
 } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import {
+  getB20Network,
+  type B20NetworkId,
+} from '@/lib/b20/networks';
 
 /** Singleton B20 Factory precompile — same address on every Base network. */
 export const B20_FACTORY: Address = '0xB20f000000000000000000000000000000000000';
@@ -57,10 +60,14 @@ export const BURN_ROLE: Hex = keccak256(stringToBytes('BURN_ROLE'));
 /** Uncapped sentinel: type(uint128).max. */
 export const MAX_SUPPLY_CAP = (1n << 128n) - 1n;
 
-export const SEPOLIA = baseSepolia;
-export const SEPOLIA_CHAIN_ID_HEX = `0x${baseSepolia.id.toString(16)}` as const; // 0x14a34
-export const FAUCET_URL = 'https://portal.cdp.coinbase.com/products/faucet';
-export const EXPLORER = 'https://sepolia.basescan.org';
+/** @deprecated Use getB20Network('sepolia').chain */
+export const SEPOLIA = getB20Network('sepolia').chain;
+/** @deprecated Use getB20Network('sepolia').chainIdHex */
+export const SEPOLIA_CHAIN_ID_HEX = getB20Network('sepolia').chainIdHex;
+/** @deprecated Use getB20Network('sepolia').faucetUrl */
+export const FAUCET_URL = getB20Network('sepolia').faucetUrl!;
+/** @deprecated Use getB20Network(id).explorer */
+export const EXPLORER = getB20Network('sepolia').explorer;
 
 /** Factory ABI — only what we call. */
 export const FACTORY_ABI = [
@@ -315,9 +322,10 @@ function encodeCall(name: 'updateSupplyCap' | 'grantRole' | 'batchMint', args: u
   });
 }
 
-/** Read-only client for Base Sepolia (used for address prediction + receipts). */
-export function publicClient() {
-  return createPublicClient({ chain: SEPOLIA, transport: http() });
+/** Read-only client for the selected Base network. */
+export function publicClient(networkId: B20NetworkId = 'sepolia') {
+  const net = getB20Network(networkId);
+  return createPublicClient({ chain: net.chain, transport: http(net.rpcUrl) });
 }
 
 export interface Eip1193Provider {
@@ -332,17 +340,19 @@ export function getInjectedProvider(): Eip1193Provider | null {
   return eth ?? null;
 }
 
-/** Wallet client bound to the injected provider on Base Sepolia. */
-export function walletClient(provider: Eip1193Provider, account: Address) {
-  return createWalletClient({ account, chain: SEPOLIA, transport: custom(provider) });
+/** Wallet client bound to the injected provider on the selected Base network. */
+export function walletClient(provider: Eip1193Provider, account: Address, networkId: B20NetworkId = 'sepolia') {
+  const net = getB20Network(networkId);
+  return createWalletClient({ account, chain: net.chain, transport: custom(provider) });
 }
 
-/** Ensure the wallet is on Base Sepolia, adding the chain if the wallet doesn't know it. */
-export async function ensureBaseSepolia(provider: Eip1193Provider): Promise<void> {
+/** Ensure the wallet is on the selected Base network, adding the chain if needed. */
+export async function ensureB20Network(provider: Eip1193Provider, networkId: B20NetworkId): Promise<void> {
+  const net = getB20Network(networkId);
   try {
     await provider.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
+      params: [{ chainId: net.chainIdHex }],
     });
   } catch (err) {
     const code = (err as { code?: number }).code;
@@ -352,11 +362,15 @@ export async function ensureBaseSepolia(provider: Eip1193Provider): Promise<void
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: SEPOLIA_CHAIN_ID_HEX,
-            chainName: 'Base Sepolia',
-            nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
-            rpcUrls: ['https://sepolia.base.org'],
-            blockExplorerUrls: [EXPLORER],
+            chainId: net.chainIdHex,
+            chainName: net.name,
+            nativeCurrency: {
+              name: net.isTestnet ? 'Sepolia Ether' : 'Ether',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+            rpcUrls: [net.rpcUrl],
+            blockExplorerUrls: [net.explorer],
           },
         ],
       });
@@ -364,4 +378,9 @@ export async function ensureBaseSepolia(provider: Eip1193Provider): Promise<void
       throw err;
     }
   }
+}
+
+/** @deprecated Use ensureB20Network(provider, 'sepolia') */
+export async function ensureBaseSepolia(provider: Eip1193Provider): Promise<void> {
+  return ensureB20Network(provider, 'sepolia');
 }

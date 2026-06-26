@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Loader2, LogOut, Wallet } from 'lucide-react';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
-import { EXPLORER } from '@/lib/b20/launch';
+import { getB20Network, type B20NetworkId } from '@/lib/b20/networks';
 import { cn } from '@/lib/utils';
 
 interface WalletMenuProps {
@@ -13,6 +13,7 @@ interface WalletMenuProps {
   balance: string | null;
   balanceLoading: boolean;
   connecting: boolean;
+  networkId: B20NetworkId;
   onConnect: () => void;
   onDisconnect: () => void;
   onRefreshBalance: () => void;
@@ -24,10 +25,12 @@ export function WalletMenu({
   balance,
   balanceLoading,
   connecting,
+  networkId,
   onConnect,
   onDisconnect,
   onRefreshBalance,
 }: WalletMenuProps) {
+  const network = getB20Network(networkId);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +88,7 @@ export function WalletMenu({
         >
           <div className="border-b border-hyro-line/40 px-4 py-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-hyro-blue">
-              Base Sepolia
+              {network.label}
             </p>
             <p className="mt-2 font-mono text-xl font-semibold text-hyro-ink">
               {balanceLoading ? (
@@ -109,7 +112,7 @@ export function WalletMenu({
                 Connected wallet
               </p>
               <a
-                href={`${EXPLORER}/address/${account}`}
+                href={`${network.explorer}/address/${account}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-1 block break-all font-mono text-[12px] text-hyro-mute hover:text-hyro-blue"

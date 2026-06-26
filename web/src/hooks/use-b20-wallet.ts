@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { formatEther, type Address } from 'viem';
-import { ensureBaseSepolia, getInjectedProvider, publicClient } from '@/lib/b20/launch';
+import { ensureB20Network, getInjectedProvider, publicClient } from '@/lib/b20/launch';
+import type { B20NetworkId } from '@/lib/b20/networks';
+import { getB20Network } from '@/lib/b20/networks';
 import type { Eip1193Provider } from '@/lib/b20/token-ops';
 
 const DISCONNECT_KEY = 'hyro.wallet.disconnected';
@@ -25,7 +27,8 @@ function setManuallyDisconnected(disconnected: boolean) {
   }
 }
 
-export function useB20Wallet() {
+export function useB20Wallet(networkId: B20NetworkId) {
+  const network = getB20Network(networkId);
   const [account, setAccount] = useState<Address | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +67,7 @@ export function useB20Wallet() {
     setError(null);
     setManuallyDisconnected(false);
     try {
-      await ensureBaseSepolia(p);
+      await ensureB20Network(p, networkId);
       const accounts = (await p.request({ method: 'eth_requestAccounts' })) as string[];
       setAccount(accounts[0] as Address);
       setProvider(p);
@@ -73,7 +76,7 @@ export function useB20Wallet() {
     } finally {
       setConnecting(false);
     }
-  }, []);
+  }, [networkId]);
 
   const refreshBalance = useCallback(async () => {
     if (!account) {
@@ -82,14 +85,14 @@ export function useB20Wallet() {
     }
     setBalanceLoading(true);
     try {
-      const wei = await publicClient().getBalance({ address: account });
+      const wei = await publicClient(networkId).getBalance({ address: account });
       setBalanceWei(wei);
     } catch {
       setBalanceWei(null);
     } finally {
       setBalanceLoading(false);
     }
-  }, [account]);
+  }, [account, networkId]);
 
   useEffect(() => {
     void refreshBalance();
@@ -129,6 +132,7 @@ export function useB20Wallet() {
     connecting,
     disconnect,
     error,
+    network,
     provider,
     refreshBalance,
     short,

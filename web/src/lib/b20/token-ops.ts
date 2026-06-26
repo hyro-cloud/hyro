@@ -6,7 +6,6 @@ import {
   B20_FACTORY,
   B20_VARIANT_ASSET,
   B20_VARIANT_STABLECOIN,
-  EXPLORER,
   FACTORY_ABI,
   MAX_SUPPLY_CAP,
   MINT_ROLE,
@@ -14,15 +13,15 @@ import {
   PAUSABLE_BURN,
   PAUSABLE_MINT,
   PAUSABLE_TRANSFER,
-  SEPOLIA,
   TOKEN_READ_ABI,
   buildLaunchArgs,
-  ensureBaseSepolia,
+  ensureB20Network,
   publicClient,
   walletClient,
   type Eip1193Provider,
   type LaunchInputs,
 } from '@/lib/b20/launch';
+import { getB20Network, type B20NetworkId } from '@/lib/b20/networks';
 import { tokensForDeployer, type SavedB20Token } from '@/lib/b20/storage';
 
 export type { Eip1193Provider, LaunchInputs };
@@ -35,8 +34,8 @@ export interface ActivationStatus {
   stablecoin: boolean;
 }
 
-export async function checkB20Activation(): Promise<ActivationStatus> {
-  const client = publicClient();
+export async function checkB20Activation(networkId: B20NetworkId = 'sepolia'): Promise<ActivationStatus> {
+  const client = publicClient(networkId);
   const [asset, stablecoin] = await Promise.all([
     client.readContract({
       address: ACTIVATION_REGISTRY,
@@ -58,8 +57,9 @@ export async function predictTokenAddress(
   variant: number,
   sender: Address,
   salt: Hex,
+  networkId: B20NetworkId = 'sepolia',
 ): Promise<Address> {
-  return publicClient().readContract({
+  return publicClient(networkId).readContract({
     address: B20_FACTORY,
     abi: FACTORY_ABI,
     functionName: 'getB20Address',
@@ -92,15 +92,16 @@ async function resolveDeployedToken(
   variant: number,
   salt: Hex,
   fallbackSender: Address,
+  networkId: B20NetworkId,
 ): Promise<Address> {
-  const client = publicClient();
+  const client = publicClient(networkId);
   const receipt = await client.getTransactionReceipt({ hash });
   const fromEvent = tokenFromReceiptLogs(receipt.logs);
   if (fromEvent) return fromEvent;
 
   const tx = await client.getTransaction({ hash });
   const deployer = tx.from;
-  const predicted = await predictTokenAddress(variant, deployer, salt);
+  const predicted = await predictTokenAddress(variant, deployer, salt, networkId);
 
   // Retry — RPC can lag right after mining
   for (let i = 0; i < 4; i++) {
@@ -116,7 +117,7 @@ async function resolveDeployedToken(
 
   // Fallback: try predicted with connected account
   if (deployer.toLowerCase() !== fallbackSender.toLowerCase()) {
-    const alt = await predictTokenAddress(variant, fallbackSender, salt);
+    const alt = await predictTokenAddress(variant, fallbackSender, salt, networkId);
     const ok = await client.readContract({
       address: B20_FACTORY,
       abi: FACTORY_ABI,
@@ -144,10 +145,12 @@ export async function deployB20Token(
   provider: Eip1193Provider,
   account: Address,
   input: LaunchInputs,
+  networkId: B20NetworkId = 'sepolia',
 ): Promise<DeployResult> {
-  await ensureBaseSepolia(provider);
+  const net = getB20Network(networkId);
+  await ensureB20Network(provider, networkId);
   const args = buildLaunchArgs(account, input);
-  const wallet = walletClient(provider, account);
+  const wallet = walletClient(provider, account, networkId);
 
   const hash = await wallet.writeContract({
     address: B20_FACTORY,
@@ -158,23 +161,27 @@ export async function deployB20Token(
     chain: wallet.chain,
   });
 
-  const receipt = await publicClient().waitForTransactionReceipt({ hash });
+  const receipt = await publicClient(networkId).waitForTransactionReceipt({ hash });
   if (receipt.status !== 'success') {
-    throw new Error('Transaction reverted — check initCalls, salt reuse, or wallet network (must be Base Sepolia 84532).');
+    throw new Error(
+      `Transaction reverted — check initCalls, salt reuse, or wallet network (must be ${net.label} ${net.chain.id}).`,
+    );
   }
 
-  if (wallet.chain?.id !== SEPOLIA.id) {
-    throw new Error(`Wrong chain: wallet on chain ${wallet.chain?.id ?? 'unknown'}, expected Base Sepolia (${SEPOLIA.id}).`);
+  if (wallet.chain?.id !== net.chain.id) {
+    throw new Error(
+      `Wrong chain: wallet on chain ${wallet.chain?.id ?? 'unknown'}, expected ${net.label} (${net.chain.id}).`,
+    );
   }
 
-  const token = await resolveDeployedToken(hash, args.variant, args.salt, account);
+  const token = await resolveDeployedToken(hash, args.variant, args.salt, account, networkId);
 
   return {
     txHash: hash,
     token,
     salt: args.salt,
-    explorerTxUrl: `${EXPLORER}/tx/${hash}`,
-    explorerTokenUrl: `${EXPLORER}/address/${token}`,
+    explorerTxUrl: `${net.explorer}/tx/${hash}`,
+    explorerTokenUrl: `${net.explorer}/address/${token}`,
     blockNumber: receipt.blockNumber,
   };
 }
@@ -194,8 +201,12 @@ export interface TokenOnchainInfo {
   canMint: boolean;
 }
 
-export async function readTokenInfo(token: Address, account?: Address): Promise<TokenOnchainInfo> {
-  const client = publicClient();
+export async function readTokenInfo(
+  token: Address,
+  account?: Address,
+  networkId: B20NetworkId = 'sepolia',
+): Promise<TokenOnchainInfo> {
+  const client = publicClient(networkId);
   const [name, symbol, decimals, totalSupply, canMint] = await Promise.all([
     client.readContract({ address: token, abi: TOKEN_READ_ABI, functionName: 'name' }),
     client.readContract({ address: token, abi: TOKEN_READ_ABI, functionName: 'symbol' }),
@@ -267,11 +278,15 @@ export async function readTokenInfo(token: Address, account?: Address): Promise<
 }
 
 /** Tokens this wallet can mint — saved deployments + on-chain B20Created scan. */
-export async function listMintableTokens(account: Address): Promise<SavedB20Token[]> {
-  const client = publicClient();
+export async function listMintableTokens(
+  account: Address,
+  networkId: B20NetworkId = 'sepolia',
+): Promise<SavedB20Token[]> {
+  const net = getB20Network(networkId);
+  const client = publicClient(networkId);
   const byAddress = new Map<string, SavedB20Token>();
 
-  for (const tok of tokensForDeployer(account)) {
+  for (const tok of tokensForDeployer(account, net.chain.id)) {
     byAddress.set(tok.address.toLowerCase(), tok);
   }
 
@@ -313,7 +328,7 @@ export async function listMintableTokens(account: Address): Promise<SavedB20Toke
         deployer: account,
         txHash: '0x' as Hex,
         salt: '0x' as Hex,
-        chainId: SEPOLIA.id,
+        chainId: net.chain.id,
         createdAt: Date.now(),
       });
     }
@@ -341,9 +356,10 @@ export async function mintTokens(
   token: Address,
   to: Address,
   amount: bigint,
+  networkId: B20NetworkId = 'sepolia',
 ): Promise<Hex> {
-  await ensureBaseSepolia(provider);
-  const wallet = walletClient(provider, account);
+  await ensureB20Network(provider, networkId);
+  const wallet = walletClient(provider, account, networkId);
   return wallet.writeContract({
     address: token,
     abi: TOKEN_READ_ABI,
@@ -359,9 +375,10 @@ export async function burnTokens(
   account: Address,
   token: Address,
   amount: bigint,
+  networkId: B20NetworkId = 'sepolia',
 ): Promise<Hex> {
-  await ensureBaseSepolia(provider);
-  const wallet = walletClient(provider, account);
+  await ensureB20Network(provider, networkId);
+  const wallet = walletClient(provider, account, networkId);
   return wallet.writeContract({
     address: token,
     abi: TOKEN_READ_ABI,
@@ -377,9 +394,10 @@ export async function setPaused(
   account: Address,
   token: Address,
   pause: boolean,
+  networkId: B20NetworkId = 'sepolia',
 ): Promise<Hex> {
-  await ensureBaseSepolia(provider);
-  const wallet = walletClient(provider, account);
+  await ensureB20Network(provider, networkId);
+  const wallet = walletClient(provider, account, networkId);
   return wallet.writeContract({
     address: token,
     abi: TOKEN_READ_ABI,
@@ -392,4 +410,8 @@ export async function setPaused(
 
 export function variantFromKind(kind: LaunchInputs['variant']): number {
   return kind === 'stablecoin' ? B20_VARIANT_STABLECOIN : B20_VARIANT_ASSET;
+}
+
+export function tokensForChain(tokens: SavedB20Token[], chainId: number): SavedB20Token[] {
+  return tokens.filter((t) => t.chainId === chainId);
 }

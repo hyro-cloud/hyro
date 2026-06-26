@@ -17,13 +17,20 @@ import { Button } from '@/components/ui/button';
 import { useB20Wallet } from '@/hooks/use-b20-wallet';
 import { WalletMenu } from '@/components/token/wallet-menu';
 import {
-  EXPLORER,
-  FAUCET_URL,
-  SEPOLIA,
-  buildLaunchArgs,
   randomSalt,
   type LaunchInputs,
 } from '@/lib/b20/launch';
+import {
+  B20_NETWORK_LIST,
+  formatMainnetCountdown,
+  getB20Network,
+  isBeforeMainnetActivation,
+  loadB20NetworkPreference,
+  mainnetOpensInMs,
+  networkIdFromChainId,
+  saveB20NetworkPreference,
+  type B20NetworkId,
+} from '@/lib/b20/networks';
 import { saveToken, tokensForDeployer, loadSavedTokens, type SavedB20Token } from '@/lib/b20/storage';
 import {
   burnTokens,
@@ -34,6 +41,7 @@ import {
   predictTokenAddress,
   readTokenInfo,
   setPaused,
+  tokensForChain,
   variantFromKind,
   type ActivationStatus,
   type DeployResult,
@@ -67,7 +75,15 @@ function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
+function tokenNetworkId(tok: SavedB20Token, fallback: B20NetworkId): B20NetworkId {
+  return networkIdFromChainId(tok.chainId) ?? fallback;
+}
+
 export function TokenStudio() {
+  const [networkId, setNetworkId] = useState<B20NetworkId>(() => loadB20NetworkPreference());
+  const network = getB20Network(networkId);
+  const [mainnetCountdown, setMainnetCountdown] = useState(() => mainnetOpensInMs());
+
   const {
     account,
     balance,
@@ -79,7 +95,7 @@ export function TokenStudio() {
     provider,
     refreshBalance,
     short,
-  } = useB20Wallet();
+  } = useB20Wallet(networkId);
   const [studioMode, setStudioMode] = useState<StudioMode>('deploy');
   const [tab, setTab] = useState<Tab>('create');
   const [activation, setActivation] = useState<ActivationStatus | null>(null);
@@ -116,11 +132,27 @@ export function TokenStudio() {
   }, []);
 
   const myTokens = useMemo(
-    () => (account ? tokensForDeployer(account) : []),
-    [account, tokenListVersion],
+    () => (account ? tokensForDeployer(account, network.chain.id) : []),
+    [account, network.chain.id, tokenListVersion],
   );
 
-  const launchedList = useMemo(() => loadSavedTokens(), [tokenListVersion]);
+  const launchedList = useMemo(
+    () => tokensForChain(loadSavedTokens(), network.chain.id),
+    [network.chain.id, tokenListVersion],
+  );
+
+  const switchNetwork = useCallback(
+    (id: B20NetworkId) => {
+      setNetworkId(id);
+      saveB20NetworkPreference(id);
+      setSelected(null);
+      setMintToken(null);
+      setDeploySuccess(null);
+      setMintSuccess(null);
+      setStatus(null);
+    },
+    [],
+  );
 
   const refreshMintable = useCallback(async () => {
     if (!account) {
@@ -131,7 +163,7 @@ export function TokenStudio() {
     }
     setLoadingMintable(true);
     try {
-      const list = await listMintableTokens(account);
+      const list = await listMintableTokens(account, networkId);
       setMintableTokens(list);
       setMintToken((prev) => {
         if (prev && list.some((t) => t.address.toLowerCase() === prev.address.toLowerCase())) {
@@ -145,7 +177,7 @@ export function TokenStudio() {
     } finally {
       setLoadingMintable(false);
     }
-  }, [account]);
+  }, [account, networkId]);
 
   useEffect(() => {
     if (studioMode === 'mint' && account) void refreshMintable();
@@ -159,7 +191,7 @@ export function TokenStudio() {
     }
     let cancelled = false;
     setMintInfoLoading(true);
-    readTokenInfo(mintToken.address, account)
+    readTokenInfo(mintToken.address, account, networkId)
       .then((info) => {
         if (!cancelled) setMintInfo(info);
       })
@@ -172,12 +204,22 @@ export function TokenStudio() {
     return () => {
       cancelled = true;
     };
-  }, [mintToken, account, tokenListVersion]);
+  }, [mintToken, account, networkId, tokenListVersion]);
 
   useEffect(() => {
-    checkB20Activation().then(setActivation).catch(() => setActivation({ asset: false, stablecoin: false }));
+    checkB20Activation(networkId)
+      .then(setActivation)
+      .catch(() => setActivation({ asset: false, stablecoin: false }));
     refreshTokens();
-  }, [refreshTokens]);
+  }, [networkId, refreshTokens]);
+
+  useEffect(() => {
+    if (networkId !== 'mainnet') return;
+    const tick = () => setMainnetCountdown(mainnetOpensInMs());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, [networkId]);
 
   const refreshPreview = useCallback(async () => {
     if (!account) {
@@ -186,12 +228,12 @@ export function TokenStudio() {
     }
     try {
       const variant = variantFromKind(form.variant);
-      const addr = await predictTokenAddress(variant, account, salt);
+      const addr = await predictTokenAddress(variant, account, salt, networkId);
       setPreview(addr);
     } catch {
       setPreview('—');
     }
-  }, [account, form.variant, salt]);
+  }, [account, form.variant, salt, networkId]);
 
   useEffect(() => {
     void refreshPreview();
@@ -217,13 +259,18 @@ export function TokenStudio() {
     const active =
       form.variant === 'stablecoin' ? activation?.stablecoin : activation?.asset;
     if (activation && !active) {
-      setStatus('B20 not activated on Sepolia yet — deploy may revert with FeatureNotActivated.');
+      const label = network.label;
+      setStatus(
+        networkId === 'mainnet' && isBeforeMainnetActivation()
+          ? `B20 mainnet opens ${formatMainnetCountdown(mainnetCountdown)} — deploy may revert with FeatureNotActivated until the Activation Registry is enabled.`
+          : `B20 not activated on ${label} yet — deploy may revert with FeatureNotActivated.`,
+      );
     }
     setBusy(true);
     setDeploySuccess(null);
     setStatus('Confirm transaction in your wallet…');
     try {
-      const result = await deployB20Token(provider, account, { ...form, salt });
+      const result = await deployB20Token(provider, account, { ...form, salt }, networkId);
       const saved: SavedB20Token = {
         id: crypto.randomUUID(),
         address: result.token,
@@ -234,7 +281,7 @@ export function TokenStudio() {
         deployer: account,
         txHash: result.txHash,
         salt: result.salt,
-        chainId: SEPOLIA.id,
+        chainId: network.chain.id,
         createdAt: Date.now(),
       };
       saveToken(saved);
@@ -256,7 +303,7 @@ export function TokenStudio() {
     setSelected(tok);
     setMintTo(account ?? tok.deployer);
     try {
-      const info = await readTokenInfo(tok.address, account ?? undefined);
+      const info = await readTokenInfo(tok.address, account ?? undefined, tokenNetworkId(tok, networkId));
       setTokenInfo(info);
     } catch (e) {
       setTokenInfo(null);
@@ -275,7 +322,7 @@ export function TokenStudio() {
     setMintSuccess(null);
     setStatus('Confirm mint in your wallet…');
     try {
-      const info = mintInfo ?? (await readTokenInfo(mintToken.address, account));
+      const info = mintInfo ?? (await readTokenInfo(mintToken.address, account, tokenNetworkId(mintToken, networkId)));
       if (!info.canMint) {
         throw new Error('Your wallet does not have MINT_ROLE on this token.');
       }
@@ -285,7 +332,7 @@ export function TokenStudio() {
       const amountStr = mintAmt || '0';
       const amt = parseUnits(amountStr, info.decimals);
       if (amt <= 0n) throw new Error('Enter an amount greater than 0.');
-      const hash = await mintTokens(provider, account, mintToken.address, account, amt);
+      const hash = await mintTokens(provider, account, mintToken.address, account, amt, tokenNetworkId(mintToken, networkId));
       setMintSuccess({
         txHash: hash,
         amount: amountStr,
@@ -296,7 +343,7 @@ export function TokenStudio() {
       setStatus(null);
       setMintAmt('');
       await refreshMintable();
-      const refreshed = await readTokenInfo(mintToken.address, account);
+      const refreshed = await readTokenInfo(mintToken.address, account, tokenNetworkId(mintToken, networkId));
       setMintInfo(refreshed);
     } catch (e) {
       setStatus((e as Error).message);
@@ -313,7 +360,14 @@ export function TokenStudio() {
       const amountStr = mintAmt;
       const amt = parseUnits(amountStr, tokenInfo.decimals);
       const to = (mintTo || account) as Address;
-      const hash = await mintTokens(provider, account, selected.address, to, amt);
+      const hash = await mintTokens(
+        provider,
+        account,
+        selected.address,
+        to,
+        amt,
+        tokenNetworkId(selected, networkId),
+      );
       setMintSuccess({
         txHash: hash,
         amount: amountStr,
@@ -335,7 +389,13 @@ export function TokenStudio() {
     setBusy(true);
     try {
       const amt = parseUnits(burnAmt, tokenInfo.decimals);
-      const hash = await burnTokens(provider, account, selected.address, amt);
+      const hash = await burnTokens(
+        provider,
+        account,
+        selected.address,
+        amt,
+        tokenNetworkId(selected, networkId),
+      );
       setStatus(`Burn tx: ${hash}`);
       await loadManage(selected);
     } catch (e) {
@@ -349,7 +409,13 @@ export function TokenStudio() {
     if (!provider || !account || !selected) return;
     setBusy(true);
     try {
-      const hash = await setPaused(provider, account, selected.address, pause);
+      const hash = await setPaused(
+        provider,
+        account,
+        selected.address,
+        pause,
+        tokenNetworkId(selected, networkId),
+      );
       setStatus(`${pause ? 'Pause' : 'Unpause'} tx: ${hash}`);
       await loadManage(selected);
     } catch (e) {
@@ -362,6 +428,15 @@ export function TokenStudio() {
   const variantActive =
     form.variant === 'stablecoin' ? activation?.stablecoin : activation?.asset;
 
+  const activationLabel =
+    activation === null
+      ? 'Checking…'
+      : variantActive
+        ? `B20 live on ${network.label}`
+        : networkId === 'mainnet' && isBeforeMainnetActivation()
+          ? `Mainnet opens in ${formatMainnetCountdown(mainnetCountdown)}`
+          : `B20 pending on ${network.label}`;
+
   return (
     <div className="min-h-screen bg-hyro-bg pt-20 pb-16">
       <div className="shell px-4 sm:px-6">
@@ -369,7 +444,7 @@ export function TokenStudio() {
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4 border-b border-hyro-line/50 pb-6">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-hyro-blue">
-              HYRO Token Studio · Base Sepolia
+              HYRO Token Studio · {network.label}
             </p>
             <h1 className="mt-1 font-mono text-2xl font-semibold text-hyro-ink sm:text-3xl">
               Launch a B20 Token
@@ -389,6 +464,26 @@ export function TokenStudio() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-full border border-hyro-line/60 bg-hyro-panel/40 p-0.5">
+              {B20_NETWORK_LIST.map((id) => {
+                const net = getB20Network(id);
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => switchNetwork(id)}
+                    className={cn(
+                      'rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition',
+                      networkId === id
+                        ? 'bg-hyro-blue text-white'
+                        : 'text-hyro-dim hover:text-hyro-ink',
+                    )}
+                  >
+                    {net.isTestnet ? 'Sepolia' : 'Mainnet'}
+                  </button>
+                );
+              })}
+            </div>
             <span
               className={cn(
                 'rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-wider',
@@ -397,29 +492,51 @@ export function TokenStudio() {
                   : 'border-hyro-orange/40 bg-hyro-orange/10 text-orange-400',
               )}
             >
-              {activation === null
-                ? 'Checking…'
-                : variantActive
-                  ? 'B20 live on Sepolia'
-                  : 'B20 pending activation'}
+              {activationLabel}
             </span>
-            <Button variant="outline" size="sm" asChild>
-              <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer">
-                Faucet
-              </a>
-            </Button>
+            {network.faucetUrl ? (
+              <Button variant="outline" size="sm" asChild>
+                <a href={network.faucetUrl} target="_blank" rel="noopener noreferrer">
+                  Faucet
+                </a>
+              </Button>
+            ) : null}
             <WalletMenu
               account={account}
               short={short}
               balance={balance}
               balanceLoading={balanceLoading}
               connecting={connecting}
+              networkId={networkId}
               onConnect={() => void connect()}
               onDisconnect={() => void disconnect()}
               onRefreshBalance={() => void refreshBalance()}
             />
           </div>
         </div>
+
+        {networkId === 'mainnet' && !variantActive && (
+          <div className="mb-6 rounded-xl border border-hyro-orange/30 bg-hyro-orange/5 px-4 py-3 text-sm text-hyro-mute">
+            <p className="font-mono text-[12px] text-hyro-ink">
+              {isBeforeMainnetActivation()
+                ? `B20 mainnet opens ${formatMainnetCountdown(mainnetCountdown)} (June 26, 2026 · 6pm UTC).`
+                : 'B20 Activation Registry may still be enabling on mainnet (~1 hour after Beryl).'}
+            </p>
+            <p className="mt-1 text-[12px] text-hyro-dim">
+              Verify with{' '}
+              <code className="text-hyro-blue">isActivated(base.b20_asset)</code> on the Activation Registry before
+              deploying.{' '}
+              <a
+                href="https://docs.base.org/get-started/launch-b20-token#verify-the-activation-registry-is-enabled"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-hyro-blue hover:underline"
+              >
+                Base B20 launch guide
+              </a>
+            </p>
+          </div>
+        )}
 
         {walletError && (
           <p className="mb-4 rounded-lg border border-hyro-red/30 bg-hyro-red/10 px-4 py-2 font-mono text-[12px] text-hyro-red">
@@ -436,6 +553,8 @@ export function TokenStudio() {
           <div className="mb-6">
             <MintSuccessCard
               result={mintSuccess}
+              networkLabel={network.label}
+              explorer={network.explorer}
               copied={copied}
               onCopy={copyValue}
               onDismiss={() => setMintSuccess(null)}
@@ -490,6 +609,7 @@ export function TokenStudio() {
             onRefresh={() => void refreshMintable()}
             onMint={() => void doMintFromPanel()}
             onGoDeploy={() => setStudioMode('deploy')}
+            networkLabel={network.label}
           />
         ) : (
         <div className="flex flex-col gap-6 lg:flex-row">
@@ -530,6 +650,7 @@ export function TokenStudio() {
                 {deploySuccess && (
                   <DeploySuccessCard
                     result={deploySuccess}
+                    networkLabel={network.label}
                     copied={copied}
                     onCopy={copyValue}
                     onManage={() => {
@@ -702,7 +823,7 @@ export function TokenStudio() {
                 </Button>
 
                 <p className="font-mono text-[10px] text-hyro-faint">
-                  Base Sepolia · factory{' '}
+                  {network.label} · factory{' '}
                   <span className="text-hyro-dim">0xB20f…0000</span> ·{' '}
                   <a href={SITE.b20Docs} target="_blank" rel="noopener noreferrer" className="text-hyro-blue hover:underline">
                     B20 docs
@@ -754,7 +875,7 @@ export function TokenStudio() {
                           </p>
                         </div>
                         <a
-                          href={`${EXPLORER}/address/${selected.address}`}
+                          href={`${getB20Network(tokenNetworkId(selected, networkId)).explorer}/address/${selected.address}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 font-mono text-[11px] text-hyro-dim hover:text-hyro-blue"
@@ -793,8 +914,16 @@ export function TokenStudio() {
                         </dl>
                       )}
                       <div className="mt-4 space-y-2 border-t border-hyro-line/40 pt-4 font-mono text-[11px]">
-                        <CopyRow label="Contract" value={selected.address} explorer={`${EXPLORER}/address/${selected.address}`} />
-                        <CopyRow label="Deploy tx" value={selected.txHash} explorer={`${EXPLORER}/tx/${selected.txHash}`} />
+                        <CopyRow
+                          label="Contract"
+                          value={selected.address}
+                          explorer={`${getB20Network(tokenNetworkId(selected, networkId)).explorer}/address/${selected.address}`}
+                        />
+                        <CopyRow
+                          label="Deploy tx"
+                          value={selected.txHash}
+                          explorer={`${getB20Network(tokenNetworkId(selected, networkId)).explorer}/tx/${selected.txHash}`}
+                        />
                       </div>
                     </div>
 
@@ -878,17 +1007,21 @@ const inputCls =
 
 function MintSuccessCard({
   result,
+  networkLabel,
+  explorer,
   copied,
   onCopy,
   onDismiss,
 }: {
   result: { txHash: Hex; amount: string; symbol: string; name: string; token: Address };
+  networkLabel: string;
+  explorer: string;
   copied: string | null;
   onCopy: (key: string, value: string) => void;
   onDismiss: () => void;
 }) {
-  const explorerTxUrl = `${EXPLORER}/tx/${result.txHash}`;
-  const explorerTokenUrl = `${EXPLORER}/address/${result.token}`;
+  const explorerTxUrl = `${explorer}/tx/${result.txHash}`;
+  const explorerTokenUrl = `${explorer}/address/${result.token}`;
 
   return (
     <div className="rounded-xl border border-hyro-green/40 bg-hyro-green/[0.08] p-5">
@@ -897,7 +1030,9 @@ function MintSuccessCard({
           <Check className="h-5 w-5" />
         </span>
         <div>
-          <p className="font-mono text-[13px] font-semibold text-hyro-green">Mint successful on Base Sepolia</p>
+          <p className="font-mono text-[13px] font-semibold text-hyro-green">
+            Mint successful on {networkLabel}
+          </p>
           <p className="mt-0.5 font-mono text-[12px] text-hyro-mute">
             {result.amount} <span className="text-hyro-blue">{result.symbol}</span> → {result.name}
           </p>
@@ -939,6 +1074,7 @@ function MintSuccessCard({
 
 function DeploySuccessCard({
   result,
+  networkLabel,
   copied,
   onCopy,
   onManage,
@@ -946,6 +1082,7 @@ function DeploySuccessCard({
   onDismiss,
 }: {
   result: DeployResult & { name: string; symbol: string };
+  networkLabel: string;
   copied: string | null;
   onCopy: (key: string, value: string) => void;
   onManage: () => void;
@@ -959,7 +1096,9 @@ function DeploySuccessCard({
           <Check className="h-5 w-5" />
         </span>
         <div>
-          <p className="font-mono text-[13px] font-semibold text-hyro-green">Token deployed on Base Sepolia</p>
+          <p className="font-mono text-[13px] font-semibold text-hyro-green">
+            Token deployed on {networkLabel}
+          </p>
           <p className="mt-0.5 font-mono text-[12px] text-hyro-mute">
             {result.name} <span className="text-hyro-blue">({result.symbol})</span> · block {result.blockNumber.toString()}
           </p>
@@ -1090,6 +1229,7 @@ function MintTokensPanel({
   onRefresh,
   onMint,
   onGoDeploy,
+  networkLabel,
 }: {
   account: Address | null;
   short: string | null;
@@ -1107,6 +1247,7 @@ function MintTokensPanel({
   onRefresh: () => void;
   onMint: () => void;
   onGoDeploy: () => void;
+  networkLabel: string;
 }) {
   const [faqOpen, setFaqOpen] = useState<string | null>(null);
 
@@ -1240,7 +1381,7 @@ function MintTokensPanel({
               </Field>
 
               <p className="font-mono text-[10px] text-hyro-faint">
-                Mints to your wallet ({short}) · Base Sepolia
+                Mints to your wallet ({short}) · {networkLabel}
               </p>
 
               <div className="pt-1">
