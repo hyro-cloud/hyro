@@ -48,6 +48,7 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/#roadmap', label: 'Roadmap' },
   { href: '/b20', label: 'B20' },
   { href: '/token', label: 'Token', highlight: true },
+  { href: '/hyro', label: '$HYRO', highlight: true },
 ];
 
 export const MANTRA = ['Observe', 'Decide', 'Execute', 'Remember'];
