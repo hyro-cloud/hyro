@@ -5,6 +5,7 @@ import { ArrowRight, Cloud, Coins, ExternalLink, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BANKR_X402_GUIDE, INTEGRATION_URLS, X402_FLOW_GUIDE } from '@/lib/integrations/onchain';
 import { SITE } from '@/lib/content';
+import { X402Try } from './x402-try';
 
 const FLOW_STEPS = [
   { n: '01', title: 'Request', body: 'Agent calls your API or MCP tool without credentials.' },
@@ -74,7 +75,9 @@ export function X402Showcase() {
           ))}
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <X402Try />
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
           <section>
             <h2 className="mb-4 flex items-center gap-2 font-mono text-sm font-semibold text-hyro-ink">
               <Cloud className="h-4 w-4 text-hyro-blue" />

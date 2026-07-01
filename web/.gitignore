@@ -24,5 +24,8 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 
+# marketplace file-backed listings (self-host/dev persistence)
+/.data
+
 .vercel
 .env*.local

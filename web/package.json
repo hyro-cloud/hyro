@@ -24,7 +24,9 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.160.0",
-    "viem": "^2.53.1"
+    "viem": "^2.54.1",
+    "ws": "^8.20.1",
+    "x402-fetch": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
