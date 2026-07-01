@@ -44,6 +44,7 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/playground', label: 'Playground', highlight: true },
   { href: '/mcp', label: 'MCP' },
   { href: '/x402', label: 'x402' },
+  { href: '/marketplace', label: 'Market' },
   { href: '/#cli', label: 'CLI' },
   { href: '/#roadmap', label: 'Roadmap' },
   { href: '/b20', label: 'B20' },
